@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sagittarius — Black Hole Simulation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+    #gl-canvas { display: block; width: 100vw; height: 100vh; }
+
+    /* Control Panel */
+    #control-panel {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      width: 240px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 16px;
+      color: #ddd;
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+      transition: opacity 0.3s;
+      z-index: 10;
+    }
+    #control-panel.hidden { opacity: 0; pointer-events: none; }
+    #control-panel h2 { font-size: 14px; margin-bottom: 12px; color: #fff; letter-spacing: 1px; }
+
+    .control-group { margin-bottom: 10px; }
+    .control-group label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .control-group label span.val { color: #aaa; font-variant-numeric: tabular-nums; }
+    .control-group input[type="range"] { width: 100%; accent-color: #f80; }
+    .control-group select { width: 100%; background: #222; color: #ddd; border: 1px solid #555; border-radius: 4px; padding: 3px; }
+
+    .toggle-row { display: flex; gap: 12px; margin-bottom: 10px; }
+    .toggle-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+    #fps-display { color: #0f0; font-family: monospace; font-size: 12px; margin-bottom: 8px; }
+    #btn-reset {
+      width: 100%;
+      padding: 6px;
+      background: #333;
+      color: #ddd;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #btn-reset:hover { background: #444; }
+
+    .hint { font-size: 11px; color: #666; margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <canvas id="gl-canvas"></canvas>
+
+  <div id="control-panel">
+    <h2>SAGITTARIUS</h2>
+
+    <div id="fps-display">FPS: --</div>
+
+    <div class="control-group">
+      <label>Mass <span class="val" id="mass-value">1.50</span></label>
+      <input type="range" id="mass-slider" min="0" max="10" step="0.1" value="1.5" />
+    </div>
+
+    <div class="control-group">
+      <label>Steps <span class="val" id="steps-value">1000</span></label>
+      <input type="range" id="steps-slider" min="1" max="5000" step="1" value="1000" />
+    </div>
+
+    <div class="control-group">
+      <label>Step Size <span class="val" id="stepsize-value">0.05</span></label>
+      <input type="range" id="stepsize-slider" min="0.01" max="0.5" step="0.01" value="0.05" />
+    </div>
+
+    <div class="control-group">
+      <label>Resolution</label>
+      <select id="resolution-select">
+        <option value="1">1.0x (Full)</option>
+        <option value="0.5" selected>0.5x</option>
+        <option value="0.25">0.25x</option>
+      </select>
+    </div>
+
+    <div class="toggle-row">
+      <label><input type="checkbox" id="toggle-disk" checked /> Disk</label>
+      <label><input type="checkbox" id="toggle-grid" /> Grid</label>
+    </div>
+
+    <button id="btn-reset">Reset Camera</button>
+
+    <div class="hint">H — toggle panel &nbsp;|&nbsp; drag to orbit</div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
