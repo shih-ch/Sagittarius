@@ -1,7 +1,7 @@
 // src/camera.ts — Orbital camera with gl-matrix (W3)
 
 import { mat4, vec3 } from "gl-matrix";
-import type { ICamera } from "./types";
+import type { ICamera, PixelClickEvent } from "./types";
 import {
   DEFAULT_CAMERA_DISTANCE,
   DEFAULT_CAMERA_THETA,
@@ -46,9 +46,15 @@ export class Camera implements ICamera {
   private animDuration = 1.0;
   private animElapsed = 0;
 
+  // Click detection state
+  private mouseDownTime = 0;
+  private mouseDownX = 0;
+  private mouseDownY = 0;
+  private pixelClickHandler: ((evt: PixelClickEvent) => void) | null = null;
+
   // Stored handler references for cleanup in dispose()
   private onMouseMove: (e: MouseEvent) => void;
-  private onMouseUp: () => void;
+  private onMouseUp: (e: MouseEvent) => void;
   private onContextMenu: (e: Event) => void;
 
   constructor(private canvas: HTMLCanvasElement) {
@@ -103,6 +109,17 @@ export class Camera implements ICamera {
     mat4.multiply(this.vpMat, proj, view);
     mat4.invert(this.invVpMat, this.vpMat);
     return this.invVpMat as Float32Array;
+  }
+
+  getViewProjectionMatrix(aspect: number): Float32Array {
+    const view = this.getViewMatrix();
+    const proj = this.getProjectionMatrix(aspect);
+    mat4.multiply(this.vpMat, proj, view);
+    return this.vpMat as Float32Array;
+  }
+
+  setPixelClickHandler(handler: ((evt: PixelClickEvent) => void) | null): void {
+    this.pixelClickHandler = handler;
   }
 
   rotate(dTheta: number, dPhi: number): void {
@@ -178,8 +195,19 @@ export class Camera implements ICamera {
     this.rotate(dy * ROTATE_SPEED, -dx * ROTATE_SPEED);
   }
 
-  private handleMouseUp(): void {
+  private handleMouseUp(e: MouseEvent): void {
     this.isDragging = false;
+
+    // Detect click: short duration and small movement
+    const dt = performance.now() - this.mouseDownTime;
+    const dx = e.clientX - this.mouseDownX;
+    const dy = e.clientY - this.mouseDownY;
+    if (dt < 200 && Math.sqrt(dx * dx + dy * dy) < 5 && this.pixelClickHandler) {
+      const rect = this.canvas.getBoundingClientRect();
+      const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ndcY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      this.pixelClickHandler({ ndcX, ndcY });
+    }
   }
 
   private bindMouse(): void {
@@ -187,6 +215,9 @@ export class Camera implements ICamera {
       this.isDragging = true;
       this.lastX = e.clientX;
       this.lastY = e.clientY;
+      this.mouseDownTime = performance.now();
+      this.mouseDownX = e.clientX;
+      this.mouseDownY = e.clientY;
     });
 
     window.addEventListener("mousemove", this.onMouseMove);

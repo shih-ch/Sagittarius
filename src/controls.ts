@@ -53,6 +53,7 @@ export function initControls(
   const stepsizeValue = el<HTMLSpanElement>("stepsize-value");
   const toggleDisk = el<HTMLInputElement>("toggle-disk");
   const toggleGrid = el<HTMLInputElement>("toggle-grid");
+  const toggleDoppler = el<HTMLInputElement>("toggle-doppler");
   const btnReset = el<HTMLButtonElement>("btn-reset");
 
   // Sync display values on input
@@ -70,6 +71,7 @@ export function initControls(
   stepsizeSlider.addEventListener("input", syncAndNotify);
   toggleDisk.addEventListener("change", syncAndNotify);
   toggleGrid.addEventListener("change", syncAndNotify);
+  toggleDoppler.addEventListener("change", syncAndNotify);
 
   btnReset.addEventListener("click", () => {
     camera.reset();
@@ -79,6 +81,7 @@ export function initControls(
     stepsizeSlider.value = String(DEFAULT_STEP_SIZE);
     toggleDisk.checked = true;
     toggleGrid.checked = false;
+    toggleDoppler.checked = true;
     syncAndNotify();
   });
 
@@ -162,6 +165,13 @@ export function initControls(
         if (btn) toggleRecording(btn);
         break;
       }
+      case "d":
+        toggleDoppler.checked = !toggleDoppler.checked;
+        syncAndNotify();
+        break;
+      case "t":
+        window.dispatchEvent(new CustomEvent("toggle-trajectory-mode"));
+        break;
     }
   });
 
@@ -180,6 +190,7 @@ export function getParams(): BlackHoleParams {
     stepSize: parseFloat((document.getElementById("stepsize-slider") as HTMLInputElement).value),
     showDisk: (document.getElementById("toggle-disk") as HTMLInputElement).checked,
     showGrid: (document.getElementById("toggle-grid") as HTMLInputElement).checked,
+    showDoppler: (document.getElementById("toggle-doppler") as HTMLInputElement).checked,
   };
 }
 

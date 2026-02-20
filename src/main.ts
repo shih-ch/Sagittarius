@@ -1,6 +1,6 @@
 // src/main.ts — App bootstrap & render loop (Lead)
 
-import type { RenderState } from "./types";
+import type { RenderState, TraceResult } from "./types";
 import {
   DEFAULT_MASS,
   DEFAULT_MAX_STEPS,
@@ -9,6 +9,9 @@ import {
 import { createRenderer } from "./renderer";
 import { Camera } from "./camera";
 import { initControls, getParams, getResolutionScale, updateFPS, updateInfoOverlay } from "./controls";
+import { traceGeodesic } from "./geodesic-tracer";
+import { TrajectoryPanel } from "./trajectory-panel";
+import { TrajectoryOverlay } from "./trajectory-overlay";
 
 // Shader sources (Vite ?raw import)
 import vertSrc from "./shaders/fullscreen.vert?raw";
@@ -30,6 +33,34 @@ initControls(camera, (_params) => {
 
 // Renderer (W2)
 const renderer = createRenderer(canvas, vertSrc, fragSrc, gridFragSrc);
+
+// Trajectory visualization (Phase 5)
+const trajectoryPanel = new TrajectoryPanel();
+const trajectoryOverlay = new TrajectoryOverlay();
+let trajectoryMode = false;
+let lastTraceResult: TraceResult | null = null;
+
+window.addEventListener("toggle-trajectory-mode", () => {
+  trajectoryMode = !trajectoryMode;
+  if (trajectoryMode) {
+    trajectoryPanel.show();
+    trajectoryOverlay.show();
+    camera.setPixelClickHandler((evt) => {
+      const aspect = window.innerWidth / window.innerHeight;
+      const invVP = camera.getInvViewProjectionMatrix(aspect);
+      const params = getParams();
+      lastTraceResult = traceGeodesic(evt.ndcX, evt.ndcY, invVP, camera.getPosition(), params);
+      trajectoryPanel.render(lastTraceResult, params);
+      trajectoryOverlay.setResult(lastTraceResult);
+    });
+  } else {
+    trajectoryPanel.hide();
+    trajectoryOverlay.hide();
+    trajectoryOverlay.setResult(null);
+    lastTraceResult = null;
+    camera.setPixelClickHandler(null);
+  }
+});
 
 // ── FPS tracking ─────────────────────────────────────────────────────────────
 
@@ -73,6 +104,13 @@ function frame(): void {
   };
 
   renderer.render(state);
+
+  // Update trajectory 3D overlay (follows camera)
+  if (trajectoryMode && lastTraceResult && trajectoryOverlay.visible) {
+    const vpMatrix = camera.getViewProjectionMatrix(aspect);
+    trajectoryOverlay.render(vpMatrix);
+  }
+
   requestAnimationFrame(frame);
 }
 

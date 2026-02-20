@@ -22,6 +22,7 @@ uniform int   u_maxSteps;
 uniform float u_stepSize;
 uniform int   u_showDisk;
 uniform int   u_showGrid;
+uniform int   u_showDoppler;
 uniform sampler2D u_starfield;
 
 // --- I/O ---
@@ -163,24 +164,17 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
     float omega = pow(max(r / rInner, 1.0), -1.5);
     float rotatedAngle = angle - u_time * omega * 1.8;
 
-    // Spiral arm pattern: bold logarithmic spirals with shearing flow
+    // Single broad logarithmic spiral (2 arms) — no competing frequencies
     float logR = log(r / rInner + 1.0);
-    float spiral1 = sin(3.0 * rotatedAngle - 5.0 * logR) * 0.5 + 0.5;
-    float spiral2 = sin(2.0 * rotatedAngle + 4.0 * logR + 1.5) * 0.5 + 0.5;
-    float spirals = mix(spiral1, spiral2, 0.4);
-    spirals = smoothstep(0.1, 0.9, spirals);
+    float spiral = sin(2.0 * rotatedAngle - 4.0 * logR) * 0.5 + 0.5;
+    spiral = smoothstep(0.15, 0.85, spiral);
 
-    // Secondary fine spirals at higher frequency for detail
-    float fineSpiral = sin(8.0 * rotatedAngle - 12.0 * logR) * 0.5 + 0.5;
-    fineSpiral = smoothstep(0.3, 0.7, fineSpiral);
-    spirals = mix(spirals, fineSpiral, 0.25);
+    // Turbulent flow via noise — carried by rotation for visible flow
+    vec2 noiseCoord = vec2(rotatedAngle * 2.0, logR * 4.0 - u_time * 0.15);
+    float turb = fbm(noiseCoord, 3);
 
-    // Fractal noise for turbulence — flows with the rotation
-    vec2 noiseCoord = vec2(rotatedAngle * 3.0, logR * 6.0 - u_time * 0.08);
-    float turb = fbm(noiseCoord, 4);
-
-    // Combine: spirals dominate, noise adds turbulent fine structure
-    float structure = mix(0.4, 1.0, spirals * 0.55 + turb * 0.35 + 0.1);
+    // Combine: spiral dominant for visible flow, noise adds organic texture
+    float structure = mix(0.4, 1.0, spiral * 0.5 + turb * 0.4 + 0.1);
 
     // Bright hot spots — large discrete blobs orbiting at Keplerian speed
     float spot1 = smoothstep(0.6, 0.1, abs(mod(rotatedAngle, TWO_PI) - 1.0))
@@ -191,7 +185,7 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
                 * smoothstep(0.5, 0.0, abs(t - 0.05));
 
     // Smaller turbulent clumps
-    float clumps = noise2D(vec2(rotatedAngle * 6.0, r / rs * 3.0));
+    float clumps = noise2D(vec2(rotatedAngle * 3.0, r / rs * 2.0));
     clumps = smoothstep(0.6, 0.95, clumps) * (1.0 - t) * 0.4;
     clumps += (spot1 + spot2 + spot3) * 0.7;
 
@@ -269,7 +263,11 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
         dopplerColor = mix(baseColor, vec3(1.4, 0.25, 0.02), clamp((1.0 - D) * 0.6, 0.0, 0.8));
     }
 
-    vec3 finalColor = dopplerColor * intensity * redshift * doppler * structure;
+    // Apply Doppler beaming conditionally
+    vec3 finalEmission = (u_showDoppler == 1) ? dopplerColor : baseColor;
+    float finalDoppler = (u_showDoppler == 1) ? doppler : 1.0;
+
+    vec3 finalColor = finalEmission * intensity * redshift * finalDoppler * structure;
 
     // --- Opacity: denser at center, fades at edges ---
     float opacity = verticalDensity * innerFade * outerFade;

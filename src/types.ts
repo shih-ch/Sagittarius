@@ -7,6 +7,7 @@ export interface BlackHoleParams {
   stepSize: number;       // RK4 step size (0.01–0.5)
   showDisk: boolean;      // Accretion disk toggle
   showGrid: boolean;      // Spacetime grid mode toggle
+  showDoppler: boolean;   // Doppler beaming toggle
 }
 
 export interface RenderState {
@@ -28,6 +29,7 @@ export interface UniformLocations {
   u_stepSize: WebGLUniformLocation | null;
   u_showDisk: WebGLUniformLocation | null;
   u_showGrid: WebGLUniformLocation | null;
+  u_showDoppler: WebGLUniformLocation | null;
   u_starfield: WebGLUniformLocation | null;
 }
 
@@ -43,6 +45,27 @@ export interface ICamera {
   getTheta(): number;
   getPhi(): number;
   getDistance(): number;
+}
+
+export interface TrajectoryPoint {
+  r: number;
+  phi: number;
+  worldPos: [number, number, number];
+}
+
+export interface TraceResult {
+  trajectory: TrajectoryPoint[];
+  outcome: 'absorbed' | 'escaped' | 'disk_hit' | 'max_steps';
+  totalDeflection: number;
+  closestApproach: number;
+  diskCrossings: number;
+  e1: [number, number, number];
+  e2: [number, number, number];
+}
+
+export interface PixelClickEvent {
+  ndcX: number;
+  ndcY: number;
 }
 
 export type OnParamsChangeCallback = (params: BlackHoleParams) => void;

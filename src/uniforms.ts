@@ -13,6 +13,7 @@ const UNIFORM_NAMES: (keyof UniformLocations)[] = [
   "u_stepSize",
   "u_showDisk",
   "u_showGrid",
+  "u_showDoppler",
   "u_starfield",
 ];
 
@@ -52,5 +53,6 @@ export function setUniforms(
   gl.uniform1f(loc.u_stepSize, state.params.stepSize);
   gl.uniform1i(loc.u_showDisk, state.params.showDisk ? 1 : 0);
   gl.uniform1i(loc.u_showGrid, state.params.showGrid ? 1 : 0);
+  gl.uniform1i(loc.u_showDoppler, state.params.showDoppler ? 1 : 0);
   gl.uniform1i(loc.u_starfield, 0); // texture unit 0
 }
