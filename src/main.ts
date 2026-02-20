@@ -8,7 +8,7 @@ import {
 } from "./math/constants";
 import { createRenderer } from "./renderer";
 import { Camera } from "./camera";
-import { initControls, getParams, getResolutionScale, updateFPS } from "./controls";
+import { initControls, getParams, getResolutionScale, updateFPS, updateInfoOverlay } from "./controls";
 
 // Shader sources (Vite ?raw import)
 import vertSrc from "./shaders/fullscreen.vert?raw";
@@ -35,17 +35,27 @@ const renderer = createRenderer(canvas, vertSrc, fragSrc, gridFragSrc);
 
 let lastTime = performance.now();
 let frameCount = 0;
+let prevFrameTime = performance.now();
 
 // ── Render Loop ──────────────────────────────────────────────────────────────
 
 function frame(): void {
   const now = performance.now();
+  const dt = (now - prevFrameTime) / 1000; // delta time in seconds
+  prevFrameTime = now;
+
   frameCount++;
   if (now - lastTime >= 1000) {
     updateFPS(frameCount / ((now - lastTime) / 1000));
     frameCount = 0;
     lastTime = now;
   }
+
+  // Update camera animation
+  camera.update(dt);
+
+  // Update info overlay
+  updateInfoOverlay(camera);
 
   const scale = getResolutionScale();
   const aspect = window.innerWidth / window.innerHeight;

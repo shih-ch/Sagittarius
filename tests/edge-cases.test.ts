@@ -187,13 +187,13 @@ describe('Float precision', () => {
 // ============================================================================
 
 describe('Shader contract', () => {
-  test('Uniform count: 10 uniforms in contract', () => {
+  test('Uniform count: 11 uniforms in contract', () => {
     const uniformNames = [
       'u_resolution', 'u_cameraPos', 'u_invViewProjection',
-      'u_mass', 'u_time', 'u_maxSteps', 'u_stepSize',
+      'u_mass', 'u_spin', 'u_time', 'u_maxSteps', 'u_stepSize',
       'u_showDisk', 'u_showGrid', 'u_starfield',
     ];
-    expect(uniformNames.length).toBe(10);
+    expect(uniformNames.length).toBe(11);
   });
 
   test('DISK_INNER_RATIO matches ISCO relationship', () => {

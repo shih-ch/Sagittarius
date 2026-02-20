@@ -49,7 +49,152 @@
     }
     #btn-reset:hover { background: #444; }
 
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .action-buttons button {
+      flex: 1;
+      padding: 5px 4px;
+      background: #333;
+      color: #ddd;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .action-buttons button:hover { background: #444; }
+    .action-buttons button.recording { background: #a00; border-color: #f00; color: #fff; }
+
     .hint { font-size: 11px; color: #666; margin-top: 8px; text-align: center; }
+
+    /* Info Overlay */
+    #info-overlay {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #ccc;
+      font-size: 12px;
+      font-family: monospace;
+      line-height: 1.6;
+      backdrop-filter: blur(6px);
+      z-index: 10;
+      transition: opacity 0.3s;
+    }
+    #info-overlay.hidden { opacity: 0; pointer-events: none; }
+    #info-overlay b { color: #f80; }
+
+    /* Science Education Panel */
+    #science-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(720px, 90vw);
+      max-height: 85vh;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.92);
+      border: 1px solid rgba(255, 165, 0, 0.3);
+      border-radius: 12px;
+      padding: 28px 32px;
+      color: #ddd;
+      font-size: 14px;
+      line-height: 1.7;
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      transition: opacity 0.3s;
+    }
+    #science-panel.hidden { opacity: 0; pointer-events: none; }
+    #science-panel h2 {
+      font-size: 20px;
+      color: #f90;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(255,165,0,0.2);
+      padding-bottom: 8px;
+    }
+    #science-panel h3 {
+      font-size: 15px;
+      color: #fc0;
+      margin: 18px 0 8px 0;
+    }
+    #science-panel .formula {
+      background: rgba(255, 255, 255, 0.06);
+      border-left: 3px solid #f80;
+      padding: 8px 14px;
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #eee;
+      border-radius: 0 4px 4px 0;
+      overflow-x: auto;
+    }
+    #science-panel .structure-diagram {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+    }
+    #science-panel .ring-diagram {
+      position: relative;
+      width: 280px;
+      height: 280px;
+    }
+    #science-panel .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #science-panel .ring-label {
+      position: absolute;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    #science-panel .note {
+      font-size: 12px;
+      color: #999;
+      font-style: italic;
+    }
+    #science-panel .top-bar {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      display: flex;
+      gap: 6px;
+    }
+    #science-panel .top-bar button {
+      background: none;
+      border: 1px solid #666;
+      color: #aaa;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #science-panel .top-bar button:hover { color: #fff; border-color: #f80; }
+    #science-panel .top-bar .active { color: #f80; border-color: #f80; }
+    #science-panel .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      #science-panel .two-col { grid-template-columns: 1fr; }
+    }
+    #science-panel .concept-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    #science-panel .concept-card b { color: #fc0; }
   </style>
 </head>
 <body>
@@ -63,6 +208,11 @@
     <div class="control-group">
       <label>Mass <span class="val" id="mass-value">1.50</span></label>
       <input type="range" id="mass-slider" min="0" max="10" step="0.1" value="1.5" />
+    </div>
+
+    <div class="control-group">
+      <label>Spin (a/M) <span class="val" id="spin-value">0.00</span></label>
+      <input type="range" id="spin-slider" min="0" max="0.99" step="0.01" value="0" />
     </div>
 
     <div class="control-group">
@@ -84,6 +234,17 @@
       </select>
     </div>
 
+    <div class="control-group">
+      <label>View Preset</label>
+      <select id="preset-select">
+        <option value="">-- Select --</option>
+        <option value="top">Top (face-on)</option>
+        <option value="side">Side (edge-on)</option>
+        <option value="classic">Classic (60&deg;)</option>
+        <option value="closeup">Close-up</option>
+      </select>
+    </div>
+
     <div class="toggle-row">
       <label><input type="checkbox" id="toggle-disk" checked /> Disk</label>
       <label><input type="checkbox" id="toggle-grid" /> Grid</label>
@@ -91,7 +252,202 @@
 
     <button id="btn-reset">Reset Camera</button>
 
-    <div class="hint">H — toggle panel &nbsp;|&nbsp; drag to orbit</div>
+    <div class="action-buttons">
+      <button id="btn-screenshot" title="Screenshot (S)">Screenshot</button>
+      <button id="btn-record" title="Record video (R)">Record</button>
+      <button id="btn-fullscreen" title="Fullscreen (F)">Fullscreen</button>
+    </div>
+
+    <div class="hint">H panel | I info | E science | F full | S snap | R rec</div>
+  </div>
+
+  <div id="info-overlay" class="hidden"></div>
+
+  <!-- Science Education Panel -->
+  <div id="science-panel" class="hidden">
+    <div class="top-bar">
+      <button id="lang-zh" class="active">中文</button>
+      <button id="lang-en">EN</button>
+      <button id="science-close">&times;</button>
+    </div>
+
+    <!-- ============ 中文版 ============ -->
+    <div id="science-zh">
+    <h2>黑洞物理學</h2>
+
+    <h3>黑洞結構</h3>
+    <div class="structure-diagram">
+      <div class="ring-diagram">
+        <div class="ring" style="width:260px;height:260px;border-color:rgba(255,100,0,0.25);border-width:30px;"></div>
+        <div class="ring" style="width:200px;height:200px;border-color:#f80;border-style:dashed;"></div>
+        <div class="ring-label" style="right:-50px;top:50%;color:#f80;">ISCO 最內穩定軌道 (6M)</div>
+        <div class="ring" style="width:140px;height:140px;border-color:#ff0;border-style:dotted;"></div>
+        <div class="ring-label" style="right:-30px;top:30%;color:#ff0;">光子球 (3M)</div>
+        <div class="ring" style="width:90px;height:90px;border-color:#f44;"></div>
+        <div class="ring-label" style="right:-30px;top:15%;color:#f44;">事件視界 (2M)</div>
+        <div class="ring" style="width:8px;height:8px;background:#fff;border:none;"></div>
+        <div class="ring-label" style="left:50%;bottom:5px;transform:translateX(-50%);color:#aaa;">奇點</div>
+      </div>
+    </div>
+
+    <h3>愛因斯坦場方程</h3>
+    <div class="formula">R<sub>&mu;&nu;</sub> - &frac12;g<sub>&mu;&nu;</sub>R = (8&pi;G/c<sup>4</sup>) T<sub>&mu;&nu;</sub></div>
+    <p class="note">史瓦西度規是此方程在真空（T=0）、球對稱、不旋轉質量下的精確解。描述了質量如何彎曲時空。</p>
+
+    <h3>史瓦西度規</h3>
+    <div class="formula">ds&sup2; = -(1 - r<sub>s</sub>/r)c&sup2;dt&sup2; + (1 - r<sub>s</sub>/r)<sup>-1</sup>dr&sup2; + r&sup2;(d&theta;&sup2; + sin&sup2;&theta; d&phi;&sup2;)</div>
+    <div class="formula">r<sub>s</sub> = 2GM/c&sup2; &nbsp;&nbsp;（史瓦西半徑）</div>
+    <p class="note">此度規描述黑洞周圍的時空幾何。當 r &rarr; r<sub>s</sub> 時，時間膨脹趨於無窮大；光無法從事件視界內逃逸。</p>
+
+    <h3>零測地線方程（光的路徑）</h3>
+    <p>光線沿零測地線（ds&sup2;=0）傳播，由歐拉-拉格朗日方程推導：</p>
+    <div class="formula">d&sup2;r/d&lambda;&sup2; = (r - 3M) &middot; (d&phi;/d&lambda;)&sup2;<br>d&sup2;&phi;/d&lambda;&sup2; = -(2/r) &middot; (dr/d&lambda;) &middot; (d&phi;/d&lambda;)</div>
+    <p class="note">(r&minus;3M) 項編碼了廣義相對論的光線偏折。在 r=3M 處此項為零：光子可無限環繞（光子球）。r&lt;3M 時所有光子都會螺旋落入黑洞。</p>
+
+    <h3>廣義相對論修正項</h3>
+    <div class="formula">a<sub>GR</sub> = -3(GM/c&sup2;) &middot; L&sup2;/r<sup>4</sup></div>
+    <p class="note">相比牛頓力學的 1/r&sup2;，此額外的 1/r<sup>4</sup> 項使光線偏折角加倍，產生愛因斯坦環和正確的黑洞陰影大小。這是廣義相對論預測與牛頓重力的關鍵區別。</p>
+
+    <div class="two-col">
+      <div class="concept-card">
+        <b>引力紅移</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">z = &radic;(1 - r<sub>s</sub>/r)</span><br>
+        光子在逃離重力場時損失能量。在事件視界處 z&rarr;0（無限紅移），光被完全困住。
+      </div>
+      <div class="concept-card">
+        <b>都卜勒聚束效應</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">D = 1/(&gamma;(1 - &beta;&middot;cos&theta;))</span><br>
+        吸積盤物質以 ~0.5c 軌道速度運動，I<sub>觀測</sub> = D<sup>4</sup>&middot;I<sub>發射</sub>。接近側明亮偏藍，遠離側暗淡偏紅。
+      </div>
+      <div class="concept-card">
+        <b>光子球</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>ph</sub> = 3M = 1.5 r<sub>s</sub></span><br>
+        不穩定的圓形光子軌道。經過此處附近的光子會繞行多圈，產生明亮的光子環（photon ring）。
+      </div>
+      <div class="concept-card">
+        <b>最內穩定圓軌道 (ISCO)</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>isco</sub> = 6M = 3 r<sub>s</sub></span><br>
+        吸積盤的內邊緣。小於此半徑的物質將不可避免地落入黑洞。Kerr 黑洞的 ISCO 隨自旋縮小。
+      </div>
+      <div class="concept-card">
+        <b>黑洞陰影</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>shadow</sub> = 3&radic;3 &middot; M &asymp; 5.2M</span><br>
+        遠方觀測者看到的暗影表觀大小。已由事件視界望遠鏡（EHT）在 M87* 和 Sgr A* 中證實。
+      </div>
+      <div class="concept-card">
+        <b>克爾度規（自旋）</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>+</sub> = M + &radic;(M&sup2; - a&sup2;)</span><br>
+        旋轉黑洞產生參考系拖曳效應，事件視界與 ISCO 縮小。極端自旋 a&rarr;M 時，ISCO&rarr;M。
+      </div>
+    </div>
+
+    <h3>RK4 數值積分</h3>
+    <div class="formula">k<sub>1</sub> = h&middot;f(y) &nbsp;&nbsp; k<sub>2</sub> = h&middot;f(y + k<sub>1</sub>/2) &nbsp;&nbsp; k<sub>3</sub> = h&middot;f(y + k<sub>2</sub>/2) &nbsp;&nbsp; k<sub>4</sub> = h&middot;f(y + k<sub>3</sub>)<br>y<sub>n+1</sub> = y<sub>n</sub> + (k<sub>1</sub> + 2k<sub>2</sub> + 2k<sub>3</sub> + k<sub>4</sub>)/6</div>
+    <p class="note">四階龍格-庫塔法：在 GPU 片段著色器中逐像素追蹤每個光子在彎曲時空中的路徑。自適應步長確保靠近視界時的精度。</p>
+
+    <h3>吸積盤物理</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>溫度分佈</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">T &prop; r<sup>-3/4</sup></span><br>
+        Novikov-Thorne 模型。內邊緣溫度超過 10<sup>7</sup>K（藍白色），外側逐漸冷卻（紅色）。
+      </div>
+      <div class="concept-card">
+        <b>開普勒差動旋轉</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">&Omega; &prop; r<sup>-3/2</sup></span><br>
+        內盤軌道速度遠快於外盤，導致可見的差動剪切流動效果。
+      </div>
+    </div>
+    </div>
+
+    <!-- ============ English Version ============ -->
+    <div id="science-en" style="display:none;">
+    <h2>Black Hole Physics</h2>
+
+    <h3>Structure</h3>
+    <div class="structure-diagram">
+      <div class="ring-diagram">
+        <div class="ring" style="width:260px;height:260px;border-color:rgba(255,100,0,0.25);border-width:30px;"></div>
+        <div class="ring" style="width:200px;height:200px;border-color:#f80;border-style:dashed;"></div>
+        <div class="ring-label" style="right:-10px;top:50%;color:#f80;">ISCO (6M)</div>
+        <div class="ring" style="width:140px;height:140px;border-color:#ff0;border-style:dotted;"></div>
+        <div class="ring-label" style="right:-30px;top:30%;color:#ff0;">Photon Sphere (3M)</div>
+        <div class="ring" style="width:90px;height:90px;border-color:#f44;"></div>
+        <div class="ring-label" style="right:-10px;top:15%;color:#f44;">Event Horizon (2M)</div>
+        <div class="ring" style="width:8px;height:8px;background:#fff;border:none;"></div>
+        <div class="ring-label" style="left:50%;bottom:5px;transform:translateX(-50%);color:#aaa;">Singularity</div>
+      </div>
+    </div>
+
+    <h3>Einstein Field Equations</h3>
+    <div class="formula">R<sub>&mu;&nu;</sub> - &frac12;g<sub>&mu;&nu;</sub>R = (8&pi;G/c<sup>4</sup>) T<sub>&mu;&nu;</sub></div>
+    <p class="note">The Schwarzschild metric is the exact vacuum solution (T=0) for a spherically symmetric, non-rotating mass. It describes how mass curves spacetime.</p>
+
+    <h3>Schwarzschild Metric</h3>
+    <div class="formula">ds&sup2; = -(1 - r<sub>s</sub>/r)c&sup2;dt&sup2; + (1 - r<sub>s</sub>/r)<sup>-1</sup>dr&sup2; + r&sup2;(d&theta;&sup2; + sin&sup2;&theta; d&phi;&sup2;)</div>
+    <div class="formula">r<sub>s</sub> = 2GM/c&sup2; &nbsp;&nbsp;(Schwarzschild radius)</div>
+    <p class="note">This metric describes the spacetime geometry around a black hole. As r &rarr; r<sub>s</sub>, time dilation becomes infinite; light cannot escape from within the event horizon.</p>
+
+    <h3>Null Geodesic Equations (Light Paths)</h3>
+    <p>Light rays follow null geodesics (ds&sup2;=0), derived from the Euler-Lagrange equations:</p>
+    <div class="formula">d&sup2;r/d&lambda;&sup2; = (r - 3M) &middot; (d&phi;/d&lambda;)&sup2;<br>d&sup2;&phi;/d&lambda;&sup2; = -(2/r) &middot; (dr/d&lambda;) &middot; (d&phi;/d&lambda;)</div>
+    <p class="note">The (r&minus;3M) term encodes GR light deflection. At r=3M it vanishes: photons orbit indefinitely (photon sphere). At r&lt;3M all photons spiral inward.</p>
+
+    <h3>GR Correction Term</h3>
+    <div class="formula">a<sub>GR</sub> = -3(GM/c&sup2;) &middot; L&sup2;/r<sup>4</sup></div>
+    <p class="note">This additional 1/r<sup>4</sup> term (vs Newtonian 1/r&sup2;) doubles the light deflection angle, creating the Einstein ring and the correct shadow size. This is the key difference between GR and Newtonian gravity.</p>
+
+    <div class="two-col">
+      <div class="concept-card">
+        <b>Gravitational Redshift</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">z = &radic;(1 - r<sub>s</sub>/r)</span><br>
+        Photons lose energy escaping gravity. At the event horizon z&rarr;0 (infinite redshift), light is fully trapped.
+      </div>
+      <div class="concept-card">
+        <b>Doppler Beaming</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">D = 1/(&gamma;(1 - &beta;&middot;cos&theta;))</span><br>
+        Orbiting matter at ~0.5c causes I<sub>obs</sub> = D<sup>4</sup>&middot;I<sub>emit</sub>. Approaching side &rarr; bright &amp; blue, receding &rarr; dim &amp; red.
+      </div>
+      <div class="concept-card">
+        <b>Photon Sphere</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>ph</sub> = 3M = 1.5 r<sub>s</sub></span><br>
+        Unstable circular photon orbit. Photons passing near here loop multiple times, creating bright photon rings.
+      </div>
+      <div class="concept-card">
+        <b>ISCO</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>isco</sub> = 6M = 3 r<sub>s</sub></span><br>
+        Innermost stable circular orbit &mdash; the disk inner edge. Matter inside inevitably falls in. Shrinks with Kerr spin.
+      </div>
+      <div class="concept-card">
+        <b>Shadow Radius</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>shadow</sub> = 3&radic;3 &middot; M &asymp; 5.2M</span><br>
+        Apparent size of the dark silhouette seen by a distant observer. Confirmed by EHT observations of M87* and Sgr A*.
+      </div>
+      <div class="concept-card">
+        <b>Kerr Metric (Spin)</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>+</sub> = M + &radic;(M&sup2; - a&sup2;)</span><br>
+        Rotating BH: frame-dragging, smaller horizon &amp; ISCO. At extremal spin a&rarr;M, ISCO&rarr;M.
+      </div>
+    </div>
+
+    <h3>RK4 Numerical Integration</h3>
+    <div class="formula">k<sub>1</sub> = h&middot;f(y) &nbsp;&nbsp; k<sub>2</sub> = h&middot;f(y + k<sub>1</sub>/2) &nbsp;&nbsp; k<sub>3</sub> = h&middot;f(y + k<sub>2</sub>/2) &nbsp;&nbsp; k<sub>4</sub> = h&middot;f(y + k<sub>3</sub>)<br>y<sub>n+1</sub> = y<sub>n</sub> + (k<sub>1</sub> + 2k<sub>2</sub> + 2k<sub>3</sub> + k<sub>4</sub>)/6</div>
+    <p class="note">4th-order Runge-Kutta: traces each photon's curved path through spacetime per-pixel in the GPU fragment shader. Adaptive step size ensures accuracy near the horizon.</p>
+
+    <h3>Accretion Disk Physics</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>Temperature Profile</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">T &prop; r<sup>-3/4</sup></span><br>
+        Novikov-Thorne model. Inner edge &gt;10<sup>7</sup>K (blue-white), outer regions cooler (red).
+      </div>
+      <div class="concept-card">
+        <b>Keplerian Rotation</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">&Omega; &prop; r<sup>-3/2</sup></span><br>
+        Inner disk orbits much faster, causing visible differential shearing of features.
+      </div>
+    </div>
+    </div>
   </div>
 
   <script type="module" src="/src/main.ts"></script>

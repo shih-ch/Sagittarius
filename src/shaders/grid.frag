@@ -14,6 +14,7 @@ uniform vec2  u_resolution;
 uniform vec3  u_cameraPos;
 uniform mat4  u_invViewProjection;
 uniform float u_mass;
+uniform float u_spin;
 uniform float u_time;
 uniform int   u_maxSteps;
 uniform float u_stepSize;
@@ -75,13 +76,20 @@ vec3 gridPattern(vec3 dir) {
 // Geodesic equations (identical to blackhole.frag)
 // ============================================================
 
-vec4 geodesicDerivs(vec4 state, float rs) {
+// Schwarzschild null geodesic + Kerr corrections (see blackhole.frag for derivation)
+vec4 geodesicDerivs(vec4 state, float rs, float a) {
     float r    = max(state.x, 0.001);
     float vr   = state.z;
     float vphi = state.w;
 
-    float d2r   = -rs / (2.0 * r * r) + r * vphi * vphi;
+    // Exact null geodesic from Schwarzschild metric
+    float d2r   = (r - 1.5 * rs) * vphi * vphi;
     float d2phi = -(2.0 / r) * vr * vphi;
+
+    // Kerr frame-dragging corrections
+    float r3 = r * r * r;
+    d2r   += -a * a * rs / (2.0 * r3) + a * rs * vphi / (r * r);
+    d2phi += a * rs * vr / r3;
 
     return vec4(vr, vphi, d2r, d2phi);
 }
@@ -105,9 +113,11 @@ void main() {
     // 2. Orbital plane
     float r0 = length(rayOrigin);
     float rs = 2.0 * u_mass;
+    float a  = u_spin * u_mass;
+    float r_eh = u_mass + sqrt(max(u_mass * u_mass - a * a, 0.0));
 
     // Camera inside event horizon
-    if (r0 <= rs && rs > 0.0) {
+    if (r0 <= r_eh && rs > 0.0) {
         fragColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
@@ -145,10 +155,10 @@ void main() {
 
         vec4 state = vec4(r, phi, vr, vphi);
 
-        vec4 k1 = adaptH * geodesicDerivs(state, rs);
-        vec4 k2 = adaptH * geodesicDerivs(state + k1 * 0.5, rs);
-        vec4 k3 = adaptH * geodesicDerivs(state + k2 * 0.5, rs);
-        vec4 k4 = adaptH * geodesicDerivs(state + k3, rs);
+        vec4 k1 = adaptH * geodesicDerivs(state, rs, a);
+        vec4 k2 = adaptH * geodesicDerivs(state + k1 * 0.5, rs, a);
+        vec4 k3 = adaptH * geodesicDerivs(state + k2 * 0.5, rs, a);
+        vec4 k4 = adaptH * geodesicDerivs(state + k3, rs, a);
 
         state += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
 
@@ -157,8 +167,8 @@ void main() {
         vr   = state.z;
         vphi = state.w;
 
-        // Event horizon
-        if (r <= rs && rs > 0.0) {
+        // Event horizon (Kerr)
+        if (r <= r_eh && rs > 0.0) {
             color = vec3(0.0);
             hitSomething = true;
             break;

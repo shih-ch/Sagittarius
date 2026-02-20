@@ -16,6 +16,7 @@ uniform vec2  u_resolution;
 uniform vec3  u_cameraPos;
 uniform mat4  u_invViewProjection;
 uniform float u_mass;
+uniform float u_spin;
 uniform float u_time;
 uniform int   u_maxSteps;
 uniform float u_stepSize;
@@ -156,23 +157,43 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
     // --- Turbulent disk structure ---
     // Polar angle in disk plane
     float angle = atan(hitPos.z, hitPos.x);
-    // Spiral arm pattern: logarithmic spirals rotating with time
-    float logR = log(r / rInner + 1.0);
-    float spiral1 = sin(4.0 * angle - 8.0 * logR + u_time * 0.15) * 0.5 + 0.5;
-    float spiral2 = sin(3.0 * angle + 6.0 * logR - u_time * 0.1 + 2.0) * 0.5 + 0.5;
-    float spirals = mix(spiral1, spiral2, 0.5);
-    spirals = smoothstep(0.15, 0.85, spirals);
 
-    // Fractal noise for fine turbulence
-    vec2 noiseCoord = vec2(angle * 3.0 + u_time * 0.05, logR * 6.0);
+    // Keplerian differential rotation: omega ∝ r^(-3/2)
+    // Inner disk rotates MUCH faster — visually dramatic shearing
+    float omega = pow(max(r / rInner, 1.0), -1.5);
+    float rotatedAngle = angle - u_time * omega * 1.8;
+
+    // Spiral arm pattern: bold logarithmic spirals with shearing flow
+    float logR = log(r / rInner + 1.0);
+    float spiral1 = sin(3.0 * rotatedAngle - 5.0 * logR) * 0.5 + 0.5;
+    float spiral2 = sin(2.0 * rotatedAngle + 4.0 * logR + 1.5) * 0.5 + 0.5;
+    float spirals = mix(spiral1, spiral2, 0.4);
+    spirals = smoothstep(0.1, 0.9, spirals);
+
+    // Secondary fine spirals at higher frequency for detail
+    float fineSpiral = sin(8.0 * rotatedAngle - 12.0 * logR) * 0.5 + 0.5;
+    fineSpiral = smoothstep(0.3, 0.7, fineSpiral);
+    spirals = mix(spirals, fineSpiral, 0.25);
+
+    // Fractal noise for turbulence — flows with the rotation
+    vec2 noiseCoord = vec2(rotatedAngle * 3.0, logR * 6.0 - u_time * 0.08);
     float turb = fbm(noiseCoord, 4);
 
-    // Combine turbulence: spirals modulated by noise
-    float structure = mix(0.5, 1.0, spirals * 0.6 + turb * 0.4);
+    // Combine: spirals dominate, noise adds turbulent fine structure
+    float structure = mix(0.4, 1.0, spirals * 0.55 + turb * 0.35 + 0.1);
 
-    // Hot clumps near inner edge
-    float clumps = noise2D(vec2(angle * 8.0 + u_time * 0.3, r / rs * 4.0));
-    clumps = smoothstep(0.55, 0.9, clumps) * (1.0 - t) * 0.5;
+    // Bright hot spots — large discrete blobs orbiting at Keplerian speed
+    float spot1 = smoothstep(0.6, 0.1, abs(mod(rotatedAngle, TWO_PI) - 1.0))
+                * smoothstep(0.4, 0.0, abs(t - 0.1));
+    float spot2 = smoothstep(0.5, 0.1, abs(mod(rotatedAngle + 2.5, TWO_PI) - 1.5))
+                * smoothstep(0.4, 0.0, abs(t - 0.2));
+    float spot3 = smoothstep(0.4, 0.1, abs(mod(rotatedAngle + 4.5, TWO_PI) - 2.8))
+                * smoothstep(0.5, 0.0, abs(t - 0.05));
+
+    // Smaller turbulent clumps
+    float clumps = noise2D(vec2(rotatedAngle * 6.0, r / rs * 3.0));
+    clumps = smoothstep(0.6, 0.95, clumps) * (1.0 - t) * 0.4;
+    clumps += (spot1 + spot2 + spot3) * 0.7;
 
     // --- Temperature gradient ---
     // Novikov-Thorne-ish: temperature ~ r^(-3/4) with ISCO correction
@@ -197,26 +218,55 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
 
     // --- Luminosity profile: ~ r^(-3) (flux from accretion physics) ---
     float x = rInner / r;
-    float intensity = x * x * x * 12.0;
-    // Boost very inner edge (ISCO glow)
-    intensity += exp(-((r - rInner) / (0.5 * rs)) * ((r - rInner) / (0.5 * rs))) * 3.0;
+    float intensity = x * x * x * 18.0;
+    // ISCO glow — bright inner ring
+    float iscoGlow = exp(-((r - rInner) / (0.4 * rs)) * ((r - rInner) / (0.4 * rs)));
+    intensity += iscoGlow * 6.0;
+    // Hot spot boost
+    intensity += clumps * 8.0;
 
     // --- Gravitational redshift: sqrt(1 - rs/r) ---
     float redshift = sqrt(max(1.0 - rs / r, 0.0));
 
-    // --- Doppler shift from Keplerian orbital motion ---
-    float vOrb = sqrt(max(u_mass / r, 0.0));
-    vec3 diskRadial = normalize(vec3(hitPos.x, 0.0, hitPos.z));
-    vec3 diskVel = normalize(cross(vec3(0.0, 1.0, 0.0), diskRadial));
-    float dopplerShift = dot(normalize(rayDir), diskVel) * vOrb;
-    float doppler = clamp(1.0 + 2.0 * dopplerShift, 0.2, 4.0);
+    // --- Relativistic Doppler beaming from Keplerian orbital motion ---
+    //
+    // GR-corrected orbital velocity in Schwarzschild:
+    //   v = sqrt(M/r) / sqrt(1 - 3M/r)
+    // At ISCO (r=6M): v ≈ 0.577c
+    // Diverges at photon sphere r=3M; capped for stability
+    float rFactor = max(1.0 - 1.5 * rs / r, 0.02);
+    float beta = min(sqrt(max(u_mass / r, 0.0)) / sqrt(rFactor), 0.95);
+    float gamma = 1.0 / sqrt(max(1.0 - beta * beta, 0.01));
 
-    // Doppler also shifts color temperature
+    // Disk velocity direction (prograde, tangential in equatorial plane)
+    vec3 diskRadial = normalize(vec3(hitPos.x, 0.0, hitPos.z));
+    vec3 diskVel = normalize(cross(diskRadial, vec3(0.0, 1.0, 0.0)));
+
+    // The Doppler shift depends on the emitter velocity projected onto
+    // the direction TO THE OBSERVER — not the local ray direction at the
+    // crossing point (which is nearly perpendicular to the disk, giving ~0).
+    //
+    // For photons escaping to infinity, the asymptotic direction ≈ toward camera.
+    // This gives the correct left-right brightness asymmetry:
+    //   approaching side (v · toObs > 0) → blueshifted, brighter
+    //   receding side    (v · toObs < 0) → redshifted,  dimmer
+    vec3 toObserver = normalize(u_cameraPos - hitPos);
+    float cosTheta = dot(toObserver, diskVel);
+
+    // Relativistic Doppler factor: D = 1 / (γ(1 - β·cosθ))
+    float D = 1.0 / (gamma * (1.0 - beta * cosTheta));
+
+    // Thermal beaming: I_obs = D⁴ · I_emit (blackbody, Liouville's theorem)
+    float doppler = D * D * D * D;
+
+    // Doppler color temperature shift
     vec3 dopplerColor = baseColor;
-    if (dopplerShift > 0.0) {
-        dopplerColor = mix(baseColor, vec3(0.7, 0.8, 1.2), dopplerShift * vOrb * 0.8);
+    if (D > 1.0) {
+        // Blueshifted (approaching): shift toward blue-white
+        dopplerColor = mix(baseColor, vec3(0.7, 0.85, 1.4), clamp((D - 1.0) * 0.5, 0.0, 0.8));
     } else {
-        dopplerColor = mix(baseColor, vec3(1.2, 0.4, 0.1), -dopplerShift * vOrb * 0.6);
+        // Redshifted (receding): shift toward deep red
+        dopplerColor = mix(baseColor, vec3(1.4, 0.25, 0.02), clamp((1.0 - D) * 0.6, 0.0, 0.8));
     }
 
     vec3 finalColor = dopplerColor * intensity * redshift * doppler * structure;
@@ -234,15 +284,44 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
 // Returns derivatives: (dr/dl, dphi/dl, d2r/dl2, d2phi/dl2)
 // ============================================================
 
-vec4 geodesicDerivs(vec4 state, float rs) {
+// ============================================================
+// Geodesic equations derived from the Schwarzschild metric:
+//   ds² = -(1-rs/r)dt² + (1-rs/r)⁻¹dr² + r²dΩ²
+//
+// For null geodesics (ds²=0), using the Euler-Lagrange equations
+// with conserved quantities E = (1-rs/r)dt/dλ, L = r²dφ/dλ:
+//
+//   d²r/dλ²  = L²/r³ - (3rs/2)·L²/r⁴
+//             = r·vphi² - (3rs/2)·vphi²
+//             = (r - 3M)·vphi²
+//
+//   d²φ/dλ²  = -(2/r)·vr·vphi  (angular momentum conservation)
+//
+// The (3rs/2)·vphi² term is the GR correction (a_GR) that:
+//   - Fixes the photon sphere at r = 3M (independent of L)
+//   - Gives the correct Einstein deflection angle (2x Newtonian)
+//   - Derives from the -3GM·h²/(c²·r⁴) effective potential term
+//
+// state = (r, φ, dr/dλ, dφ/dλ)
+// Returns derivatives: (dr/dλ, dφ/dλ, d²r/dλ², d²φ/dλ²)
+// ============================================================
+
+vec4 geodesicDerivs(vec4 state, float rs, float a) {
     float r    = max(state.x, 0.001); // guard against singularity
     float vr   = state.z;
     float vphi = state.w;
 
-    // d2r/dl2   = -rs/(2*r^2) + r * vphi^2
-    float d2r = -rs / (2.0 * r * r) + r * vphi * vphi;
-    // d2phi/dl2 = -(2/r) * vr * vphi   (angular momentum conservation)
+    // Schwarzschild null geodesic (exact, from metric):
+    //   d²r/dλ² = (r - 1.5·rs)·vphi²
+    //   d²φ/dλ² = -(2/r)·vr·vphi
+    float d2r   = (r - 1.5 * rs) * vphi * vphi;
     float d2phi = -(2.0 / r) * vr * vphi;
+
+    // Kerr frame-dragging corrections (equatorial approximation)
+    // At a=0 these vanish, recovering Schwarzschild exactly
+    float r3 = r * r * r;
+    d2r   += -a * a * rs / (2.0 * r3) + a * rs * vphi / (r * r);
+    d2phi += a * rs * vr / r3;
 
     return vec4(vr, vphi, d2r, d2phi);
 }
@@ -266,9 +345,13 @@ void main() {
     // ----- 2. Project ray into orbital plane (BH-centric polars) -----
     float r0 = length(rayOrigin);
     float rs = 2.0 * u_mass;
+    float a  = u_spin * u_mass; // dimensional Kerr spin parameter
+
+    // Kerr event horizon: r_+ = M + sqrt(M² - a²)
+    float r_eh = u_mass + sqrt(max(u_mass * u_mass - a * a, 0.0));
 
     // Graceful fallback: camera inside event horizon
-    if (r0 <= rs && rs > 0.0) {
+    if (r0 <= r_eh && rs > 0.0) {
         fragColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
@@ -294,7 +377,14 @@ void main() {
     float vr   = drInit;
     float vphi = tangentLen / r0;
 
-    float rInner  = DISK_INNER_RATIO * rs;
+    // Kerr ISCO (prograde, equatorial approximation)
+    float kerrA = min(abs(u_spin), 0.9999);
+    float z1k = 1.0 + pow(1.0 - kerrA * kerrA, 1.0/3.0) * (pow(1.0 + kerrA, 1.0/3.0) + pow(max(1.0 - kerrA, 0.0), 1.0/3.0));
+    float z2k = sqrt(3.0 * kerrA * kerrA + z1k * z1k);
+    float r_isco_kerr = u_mass * (3.0 + z2k - sqrt((3.0 - z1k) * (3.0 + z1k + 2.0 * z2k)));
+
+    float rInner  = max(r_isco_kerr, r_eh) * 2.0 / rs; // convert to ratio then back
+    rInner = max(r_isco_kerr, r_eh + 0.01); // Kerr ISCO or just outside horizon
     float rOuter  = DISK_OUTER_RATIO * rs;
     float escapeR = max(MIN_ESCAPE, r0 * ESCAPE_MULT);
     float h       = u_stepSize;
@@ -302,6 +392,11 @@ void main() {
     vec3 accumColor = vec3(0.0);
     float accumAlpha = 0.0;
     bool terminated = false;
+
+    // Phase 2: photon ring tracking
+    float totalAngle = 0.0;
+    float prevPhi = phi;
+    int diskCrossings = 0;
 
     // ----- 4. RK4 ray march loop (with disk accumulation) -----
     for (int i = 0; i < MAX_LOOP; i++) {
@@ -317,10 +412,10 @@ void main() {
         // --- RK4 step ---
         vec4 state = vec4(r, phi, vr, vphi);
 
-        vec4 k1 = adaptH * geodesicDerivs(state, rs);
-        vec4 k2 = adaptH * geodesicDerivs(state + k1 * 0.5, rs);
-        vec4 k3 = adaptH * geodesicDerivs(state + k2 * 0.5, rs);
-        vec4 k4 = adaptH * geodesicDerivs(state + k3, rs);
+        vec4 k1 = adaptH * geodesicDerivs(state, rs, a);
+        vec4 k2 = adaptH * geodesicDerivs(state + k1 * 0.5, rs, a);
+        vec4 k3 = adaptH * geodesicDerivs(state + k2 * 0.5, rs, a);
+        vec4 k4 = adaptH * geodesicDerivs(state + k3, rs, a);
 
         state += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
 
@@ -329,51 +424,61 @@ void main() {
         vr   = state.z;
         vphi = state.w;
 
+        // Track cumulative angular traversal for photon ring detection
+        totalAngle += abs(phi - prevPhi);
+        prevPhi = phi;
+
         // New 3D position
         vec3 newPos = r * (cos(phi) * e1 + sin(phi) * e2);
         float newY  = newPos.y;
 
-        // --- Check event horizon ---
-        if (r <= rs && rs > 0.0) {
-            // Disk emission already accumulated is composited over black
+        // --- Check event horizon (Kerr) ---
+        if (r <= r_eh && rs > 0.0) {
             terminated = true;
             break;
         }
 
         // --- Check accretion disk crossing (equatorial plane y=0) ---
-        // Rays pass THROUGH the disk, accumulating emission each crossing
         if (u_showDisk == 1 && accumAlpha < 0.98) {
             if (prevY * newY < 0.0) {
+                diskCrossings++;
                 // Interpolate to find crossing point
                 float tCross = abs(prevY) / (abs(prevY) + abs(newY) + 1.0e-10);
                 vec3 crossPos = mix(prevPos, newPos, tCross);
                 float crossR = length(crossPos);
                 float crossY = mix(prevY, newY, tCross);
 
-                // Sample disk with soft edges (no hard rInner/rOuter cutoff)
+                // Sample disk with soft edges
                 if (crossR >= rInner - 0.5 * rs && crossR <= rOuter + rs) {
                     vec4 diskSample = accretionDiskSample(crossR, rs, crossPos, rayDir, crossY);
 
+                    // Higher-order crossings get brightness boost (photon ring effect)
+                    float crossingBoost = 1.0 + float(max(diskCrossings - 1, 0)) * 0.3;
+                    diskSample.rgb *= crossingBoost;
+
                     // Front-to-back alpha compositing
-                    float a = diskSample.a * (1.0 - accumAlpha);
-                    accumColor += diskSample.rgb * a;
-                    accumAlpha += a;
+                    float ca = diskSample.a * (1.0 - accumAlpha);
+                    accumColor += diskSample.rgb * ca;
+                    accumAlpha += ca;
                 }
             }
         }
 
         // --- Check escape ---
         if (r > escapeR) {
-            // Reconstruct 3D escape direction from velocity in orbital plane
             vec3 rhat   = cos(phi) * e1 + sin(phi) * e2;
             vec3 phihat = -sin(phi) * e1 + cos(phi) * e2;
             vec3 escapeDir = normalize(vr * rhat + r * vphi * phihat);
 
-            // Gravitational redshift at escape point
             float redshift = sqrt(max(1.0 - rs / r, 0.0));
             vec3 starColor = sampleStarfield(escapeDir) * redshift;
 
-            // Composite starfield behind accumulated disk emission
+            // Photon ring glow: rays that nearly orbited get warm glow
+            if (totalAngle > TWO_PI) {
+                float ringGlow = smoothstep(TWO_PI, TWO_PI * 2.0, totalAngle) * 0.4;
+                starColor += vec3(1.0, 0.8, 0.5) * ringGlow;
+            }
+
             accumColor += starColor * (1.0 - accumAlpha);
             accumAlpha = 1.0;
             terminated = true;

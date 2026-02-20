@@ -2,6 +2,7 @@
 
 export interface BlackHoleParams {
   mass: number;           // BH mass, geometrized units (default 1.5)
+  spin: number;           // Kerr spin parameter a/M (0–0.99)
   maxSteps: number;       // Ray march iterations (100–5000)
   stepSize: number;       // RK4 step size (0.01–0.5)
   showDisk: boolean;      // Accretion disk toggle
@@ -21,6 +22,7 @@ export interface UniformLocations {
   u_cameraPos: WebGLUniformLocation | null;
   u_invViewProjection: WebGLUniformLocation | null;
   u_mass: WebGLUniformLocation | null;
+  u_spin: WebGLUniformLocation | null;
   u_time: WebGLUniformLocation | null;
   u_maxSteps: WebGLUniformLocation | null;
   u_stepSize: WebGLUniformLocation | null;
@@ -35,6 +37,12 @@ export interface ICamera {
   rotate(dTheta: number, dPhi: number): void;
   zoom(delta: number): void;
   reset(): void;
+  setSpherical(theta: number, phi: number, distance: number): void;
+  animateTo(theta: number, phi: number, distance: number, duration?: number): void;
+  update(dt: number): void;
+  getTheta(): number;
+  getPhi(): number;
+  getDistance(): number;
 }
 
 export type OnParamsChangeCallback = (params: BlackHoleParams) => void;

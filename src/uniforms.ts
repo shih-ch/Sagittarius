@@ -7,6 +7,7 @@ const UNIFORM_NAMES: (keyof UniformLocations)[] = [
   "u_cameraPos",
   "u_invViewProjection",
   "u_mass",
+  "u_spin",
   "u_time",
   "u_maxSteps",
   "u_stepSize",
@@ -45,6 +46,7 @@ export function setUniforms(
   );
   gl.uniformMatrix4fv(loc.u_invViewProjection, false, state.invViewProjection);
   gl.uniform1f(loc.u_mass, state.params.mass);
+  gl.uniform1f(loc.u_spin, state.params.spin);
   gl.uniform1f(loc.u_time, state.time);
   gl.uniform1i(loc.u_maxSteps, state.params.maxSteps);
   gl.uniform1f(loc.u_stepSize, state.params.stepSize);

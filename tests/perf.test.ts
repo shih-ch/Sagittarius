@@ -33,9 +33,8 @@ function benchmarkCpuRk4(steps: number, iterations: number): { avgMs: number; op
     let dphi = 0.02;
 
     for (let i = 0; i < steps; i++) {
-      const r2 = r * r;
-      // Geodesic equations (same as shader)
-      const ddr = -rs / (2 * r2) + r * dphi * dphi;
+      // Schwarzschild null geodesic equations (same as shader)
+      const ddr = (r - 1.5 * rs) * dphi * dphi;
       const ddphi = -(2 / r) * dr * dphi;
 
       // RK4 would be 4 evaluations; using Euler here for benchmark throughput

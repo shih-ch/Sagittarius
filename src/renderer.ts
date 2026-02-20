@@ -213,7 +213,7 @@ export function createRenderer(
   const glOrNull = canvas.getContext("webgl2", {
     alpha: false,
     antialias: false,
-    preserveDrawingBuffer: false,
+    preserveDrawingBuffer: true,
   });
   if (!glOrNull) {
     throw new Error(

@@ -35,6 +35,17 @@ export class Camera implements ICamera {
   private lastY = 0;
   private pinchDist = 0;
 
+  // Animation state for animateTo()
+  private animating = false;
+  private animStartTheta = 0;
+  private animStartPhi = 0;
+  private animStartDist = 0;
+  private animTargetTheta = 0;
+  private animTargetPhi = 0;
+  private animTargetDist = 0;
+  private animDuration = 1.0;
+  private animElapsed = 0;
+
   // Stored handler references for cleanup in dispose()
   private onMouseMove: (e: MouseEvent) => void;
   private onMouseUp: () => void;
@@ -110,7 +121,45 @@ export class Camera implements ICamera {
     this.theta = DEFAULT_CAMERA_THETA;
     this.phi = DEFAULT_CAMERA_PHI;
     this.distance = DEFAULT_CAMERA_DISTANCE;
+    this.animating = false;
   }
+
+  setSpherical(theta: number, phi: number, distance: number): void {
+    this.theta = Math.max(THETA_MIN, Math.min(THETA_MAX, theta));
+    this.phi = phi;
+    this.distance = Math.max(MIN_CAMERA_DISTANCE, Math.min(MAX_CAMERA_DISTANCE, distance));
+    this.animating = false;
+  }
+
+  animateTo(theta: number, phi: number, distance: number, duration = 1.0): void {
+    this.animStartTheta = this.theta;
+    this.animStartPhi = this.phi;
+    this.animStartDist = this.distance;
+    this.animTargetTheta = Math.max(THETA_MIN, Math.min(THETA_MAX, theta));
+    this.animTargetPhi = phi;
+    this.animTargetDist = Math.max(MIN_CAMERA_DISTANCE, Math.min(MAX_CAMERA_DISTANCE, distance));
+    this.animDuration = duration;
+    this.animElapsed = 0;
+    this.animating = true;
+  }
+
+  update(dt: number): void {
+    if (!this.animating) return;
+    this.animElapsed += dt;
+    let t = Math.min(this.animElapsed / this.animDuration, 1.0);
+    // Ease in-out (smoothstep)
+    t = t * t * (3 - 2 * t);
+    this.theta = this.animStartTheta + (this.animTargetTheta - this.animStartTheta) * t;
+    this.phi = this.animStartPhi + (this.animTargetPhi - this.animStartPhi) * t;
+    this.distance = this.animStartDist + (this.animTargetDist - this.animStartDist) * t;
+    if (this.animElapsed >= this.animDuration) {
+      this.animating = false;
+    }
+  }
+
+  getTheta(): number { return this.theta; }
+  getPhi(): number { return this.phi; }
+  getDistance(): number { return this.distance; }
 
   dispose(): void {
     window.removeEventListener("mousemove", this.onMouseMove);

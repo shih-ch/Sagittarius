@@ -19,6 +19,9 @@ import {
   shadowRadius,
   DISK_INNER_RATIO,
   DISK_OUTER_RATIO,
+  kerrEventHorizon,
+  kerrPhotonSphere,
+  kerrIsco,
 } from '../src/math/constants';
 
 // ============================================================================
@@ -47,12 +50,16 @@ interface GeodesicState {
   dphi: number; // dphi/dlambda
 }
 
+// Exact null geodesic equations from Schwarzschild metric:
+//   d²r/dλ² = (r - 1.5·rs)·(dφ/dλ)²
+//   d²φ/dλ² = -(2/r)·(dr/dλ)·(dφ/dλ)
+// Derived via Euler-Lagrange from ds²=-(1-rs/r)dt²+(1-rs/r)⁻¹dr²+r²dΩ²
 function geodesicDerivatives(state: GeodesicState, rs: number): GeodesicState {
   const { r, dr, dphi } = state;
   return {
     r: dr,
     phi: dphi,
-    dr: -rs / (2 * r * r) + r * dphi * dphi,
+    dr: (r - 1.5 * rs) * dphi * dphi,
     dphi: -(2 / r) * dr * dphi,
   };
 }
@@ -272,5 +279,62 @@ describe('Shadow radius', () => {
   test('Shadow ≈ 5.196*M', () => {
     const ratio = shadowRadius(M) / M;
     expect(ratio).toBeCloseTo(5.196, 2);
+  });
+});
+
+// ============================================================================
+// E. Kerr metric radii
+// ============================================================================
+
+describe('Kerr metric radii', () => {
+  test('spin=0 recovers Schwarzschild: r_eh = rs = 2M', () => {
+    expect(kerrEventHorizon(M, 0)).toBeCloseTo(schwarzschildRadius(M), 6);
+  });
+
+  test('spin=0 recovers Schwarzschild photon sphere: r_ph = 3M', () => {
+    expect(kerrPhotonSphere(M, 0)).toBeCloseTo(photonSphereRadius(M), 4);
+  });
+
+  test('spin=0 recovers Schwarzschild ISCO: r_isco = 6M', () => {
+    expect(kerrIsco(M, 0)).toBeCloseTo(iscoRadius(M), 4);
+  });
+
+  test('Higher spin → smaller event horizon', () => {
+    const rEh0 = kerrEventHorizon(M, 0);
+    const rEh5 = kerrEventHorizon(M, 0.5);
+    const rEh9 = kerrEventHorizon(M, 0.9);
+    expect(rEh5).toBeLessThan(rEh0);
+    expect(rEh9).toBeLessThan(rEh5);
+  });
+
+  test('Higher spin → smaller prograde ISCO', () => {
+    const rIsco0 = kerrIsco(M, 0);
+    const rIsco5 = kerrIsco(M, 0.5);
+    const rIsco9 = kerrIsco(M, 0.9);
+    expect(rIsco5).toBeLessThan(rIsco0);
+    expect(rIsco9).toBeLessThan(rIsco5);
+  });
+
+  test('Extremal spin (a→1): ISCO approaches M', () => {
+    const rIscoExtremal = kerrIsco(M, 0.9999);
+    // At extremal spin, ISCO converges toward M but numerical precision limits exactness
+    expect(rIscoExtremal).toBeLessThan(kerrIsco(M, 0.9));
+    expect(rIscoExtremal).toBeGreaterThan(M);
+    expect(rIscoExtremal / M).toBeLessThan(1.15);
+  });
+
+  test('mass=0: all Kerr radii are 0', () => {
+    expect(kerrEventHorizon(0, 0)).toBe(0);
+    expect(kerrPhotonSphere(0, 0)).toBe(0);
+    expect(kerrIsco(0, 0)).toBe(0);
+  });
+
+  test('All Kerr radii scale linearly with mass', () => {
+    for (const m of [1.0, 2.0, 5.0]) {
+      const spin = 0.5;
+      const rEh1 = kerrEventHorizon(1.0, spin);
+      const rEhM = kerrEventHorizon(m, spin);
+      expect(rEhM / m).toBeCloseTo(rEh1, 4);
+    }
   });
 });
