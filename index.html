@@ -793,6 +793,62 @@
         內盤軌道速度遠快於外盤，導致可見的差動剪切流動效果。
       </div>
     </div>
+
+    <h3>能層與彭羅斯過程</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>能層（Ergosphere）</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>ergo</sub>(&theta;) = M + &radic;(M&sup2; - a&sup2;cos&sup2;&theta;)</span><br>
+        克爾黑洞的事件視界之外存在一個特殊區域——能層。在能層內，時空被拖曳得如此劇烈，以至於沒有任何物體可以保持靜止。赤道面上能層最大，在自旋軸（兩極）處與事件視界重合。按 <b>G</b> 鍵可視化。
+      </div>
+      <div class="concept-card">
+        <b>彭羅斯過程</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">E<sub>B</sub> = E<sub>in</sub> + |E<sub>A</sub>|</span><br>
+        1969 年由羅傑·彭羅斯提出的能量提取機制。一個粒子進入能層後分裂為二：碎片 A 沿逆行軌道墜入黑洞（帶負能量），碎片 B 帶著更多的能量逃逸。能量來源是黑洞的旋轉動能。最大效率可達 20.7%（極端克爾黑洞）。
+      </div>
+    </div>
+
+    <h3>潮汐力與義大利麵化</h3>
+    <div class="formula">F<sub>tidal</sub> = 2GM/r&sup3; &middot; &Delta;r</div>
+    <p class="note">潮汐力源自重力場的梯度：靠近黑洞的一側受到更強的引力。當物體接近奇點時，潮汐力趨於無窮大，將物體沿徑向拉伸、橫向壓縮——稱為「義大利麵化」（spaghettification）。對於恆星級黑洞（~10 M<sub>☉</sub>），義大利麵化在視界外就會發生；而超大質量黑洞（~10<sup>9</sup> M<sub>☉</sub>）的潮汐力在視界處反而較弱，穿越視界時可能「毫無感覺」。色圖：綠=溫和，黃=中等，紅=致命。</p>
+
+    <h3>引力波</h3>
+    <div class="formula">h<sub>+</sub> &prop; a&sup2; &middot; sin(2&theta;) &middot; cos(2&phi; - &omega;t)</div>
+    <p class="note">根據廣義相對論，加速的質量會產生時空的漣漪——引力波。本模擬展示的是旋轉黑洞的四極輻射模式：星場方向受到微小的週期性扭曲，振幅正比於自旋參數的平方（a&sup2;）。2015 年 LIGO 首次直接探測到來自雙黑洞合併的引力波，證實了愛因斯坦百年前的預言。按 <b>W</b> 鍵開啟。</p>
+
+    <h3>吸積盤溫度分佈</h3>
+    <div class="formula">T(r) = T<sub>0</sub> &middot; (r<sub>isco</sub>/r)<sup>3/4</sup> &middot; [1 - &radic;(r<sub>isco</sub>/r)]<sup>1/4</sup></div>
+    <p class="note">Novikov-Thorne 薄盤模型給出吸積盤的徑向溫度分佈。峰值溫度出現在約 1.36 &times; r<sub>isco</sub> 處（而非 ISCO 本身），對於 10 M<sub>☉</sub> 的恆星級黑洞約為 6.3 &times; 10<sup>6</sup> K。模擬使用 viridis 色圖將溫度映射為顏色：深紫（冷）&rarr; 青（中溫）&rarr; 黃（高溫）。</p>
+
+    <h3>同步輻射偏振</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>環形磁場</b><br>
+        吸積盤中的磁場主要呈環形（toroidal）分佈，被差動旋轉拉伸纏繞。帶電粒子沿磁力線做螺旋運動時發出同步輻射。
+      </div>
+      <div class="concept-card">
+        <b>偏振方向</b><br>
+        同步輻射的偏振方向垂直於投影磁場方向。EHT 在 2021 年首次測量了 M87* 的偏振結構，揭示了事件視界尺度上有序的磁場幾何。模擬使用循環色相編碼偏振角。
+      </div>
+    </div>
+
+    <h3>事件視界望遠鏡 (EHT)</h3>
+    <p class="note">EHT 是一個地球尺度的射電望遠鏡陣列，利用甚長基線干涉測量（VLBI）達到約 20 微角秒的角分辨率。2019 年發布了人類史上首張黑洞影像——M87*（距地球 5500 萬光年，質量 65 億 M<sub>☉</sub>）。2022 年發布了銀河系中心 Sgr A*（距地球 2.6 萬光年，質量 400 萬 M<sub>☉</sub>）的影像。開啟 EHT 對比功能可將真實觀測影像疊加在模擬上進行視覺比較。</p>
+
+    <h3>快捷鍵一覽</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>基本操作</b><br>
+        <b>H</b> 控制面板 &nbsp; <b>I</b> 物理資訊 &nbsp; <b>E</b> 教學面板<br>
+        <b>F</b> 全螢幕 &nbsp; <b>S</b> 截圖 &nbsp; <b>R</b> 錄影
+      </div>
+      <div class="concept-card">
+        <b>物理可視化</b><br>
+        <b>T</b> 光線追蹤 &nbsp; <b>D</b> 都卜勒 &nbsp; <b>C</b> 色彩模式<br>
+        <b>J</b> 噴流 &nbsp; <b>B</b> 輝光 &nbsp; <b>N</b> 牛頓比較<br>
+        <b>G</b> 能層 &nbsp; <b>W</b> 引力波 &nbsp; <b>P</b> 公式面板 &nbsp; <b>O</b> 導覽
+      </div>
+    </div>
     </div>
 
     <!-- ============ English Version ============ -->
@@ -882,6 +938,62 @@
         Inner disk orbits much faster, causing visible differential shearing of features.
       </div>
     </div>
+
+    <h3>Ergosphere &amp; Penrose Process</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>Ergosphere</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">r<sub>ergo</sub>(&theta;) = M + &radic;(M&sup2; - a&sup2;cos&sup2;&theta;)</span><br>
+        A region outside the event horizon of a Kerr black hole where spacetime is dragged so violently that no object can remain stationary. Largest at the equator, coincides with the horizon at the poles. Press <b>G</b> to visualize.
+      </div>
+      <div class="concept-card">
+        <b>Penrose Process</b><br>
+        <span class="formula" style="display:inline-block;margin:4px 0;padding:4px 8px;">E<sub>B</sub> = E<sub>in</sub> + |E<sub>A</sub>|</span><br>
+        Proposed by Roger Penrose in 1969. A particle enters the ergosphere and splits: fragment A falls in on a retrograde orbit (negative energy at infinity), fragment B escapes with more energy than the original. The energy source is the BH's rotational kinetic energy. Maximum efficiency: 20.7% for extremal Kerr.
+      </div>
+    </div>
+
+    <h3>Tidal Forces &amp; Spaghettification</h3>
+    <div class="formula">F<sub>tidal</sub> = 2GM/r&sup3; &middot; &Delta;r</div>
+    <p class="note">Tidal forces arise from the gradient of the gravitational field: the near side of an object feels stronger gravity than the far side. Near the singularity, tidal forces diverge, stretching objects radially and compressing them laterally &mdash; this is called &ldquo;spaghettification.&rdquo; For stellar-mass BHs (~10 M<sub>&#9737;</sub>), spaghettification occurs outside the horizon; for supermassive BHs (~10<sup>9</sup> M<sub>&#9737;</sub>), tidal forces at the horizon are relatively mild. Color map: green = mild, yellow = moderate, red = lethal.</p>
+
+    <h3>Gravitational Waves</h3>
+    <div class="formula">h<sub>+</sub> &prop; a&sup2; &middot; sin(2&theta;) &middot; cos(2&phi; - &omega;t)</div>
+    <p class="note">General relativity predicts that accelerating masses produce ripples in spacetime &mdash; gravitational waves. This simulation shows the quadrupolar radiation pattern from a spinning BH: starfield directions receive a small periodic perturbation with amplitude proportional to spin squared (a&sup2;). In 2015, LIGO made the first direct detection of gravitational waves from a binary black hole merger, confirming Einstein's century-old prediction. Press <b>W</b> to enable.</p>
+
+    <h3>Accretion Disk Temperature Profile</h3>
+    <div class="formula">T(r) = T<sub>0</sub> &middot; (r<sub>isco</sub>/r)<sup>3/4</sup> &middot; [1 - &radic;(r<sub>isco</sub>/r)]<sup>1/4</sup></div>
+    <p class="note">The Novikov-Thorne thin disk model gives the radial temperature distribution of the accretion disk. Peak temperature occurs at ~1.36 &times; r<sub>isco</sub> (not at the ISCO itself), reaching ~6.3 &times; 10<sup>6</sup> K for a 10 M<sub>&#9737;</sub> stellar-mass BH. The simulation maps temperature to the viridis colormap: deep purple (cold) &rarr; teal (warm) &rarr; yellow (hot).</p>
+
+    <h3>Synchrotron Polarization</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>Toroidal Magnetic Field</b><br>
+        The magnetic field in the accretion disk is predominantly toroidal, stretched and wound by differential rotation. Charged particles spiraling along field lines emit synchrotron radiation.
+      </div>
+      <div class="concept-card">
+        <b>Polarization Direction</b><br>
+        Synchrotron polarization is perpendicular to the projected magnetic field. In 2021, EHT measured M87*'s polarization structure for the first time, revealing ordered magnetic field geometry at event-horizon scales. The simulation encodes polarization angle as cyclic hue.
+      </div>
+    </div>
+
+    <h3>Event Horizon Telescope (EHT)</h3>
+    <p class="note">The EHT is an Earth-sized radio telescope array using Very Long Baseline Interferometry (VLBI), achieving ~20 microarcsecond angular resolution. In 2019, it released humanity's first black hole image &mdash; M87* (55 million light-years away, 6.5 billion M<sub>&#9737;</sub>). In 2022, it released the image of Sgr A* at the Milky Way's center (26,000 light-years away, 4 million M<sub>&#9737;</sub>). Enable the EHT comparison overlay to superimpose real observations on the simulation.</p>
+
+    <h3>Keyboard Shortcuts</h3>
+    <div class="two-col">
+      <div class="concept-card">
+        <b>Basic Controls</b><br>
+        <b>H</b> Panel &nbsp; <b>I</b> Info &nbsp; <b>E</b> Science panel<br>
+        <b>F</b> Fullscreen &nbsp; <b>S</b> Screenshot &nbsp; <b>R</b> Record
+      </div>
+      <div class="concept-card">
+        <b>Physics Visualization</b><br>
+        <b>T</b> Trace rays &nbsp; <b>D</b> Doppler &nbsp; <b>C</b> Color mode<br>
+        <b>J</b> Jets &nbsp; <b>B</b> Bloom &nbsp; <b>N</b> Newton compare<br>
+        <b>G</b> Ergosphere &nbsp; <b>W</b> Grav. waves &nbsp; <b>P</b> Formulas &nbsp; <b>O</b> Tour
+      </div>
+    </div>
     </div>
   </div>
 
@@ -896,7 +1008,7 @@
 
   <!-- EHT Comparison Overlay -->
   <div id="eht-overlay">
-    <img id="eht-image" src="/images/eht-m87.png" alt="EHT Observation" />
+    <img id="eht-image" src="/images/eht-m87.jpg" alt="EHT Observation" />
   </div>
 
   <!-- Tour Overlay -->

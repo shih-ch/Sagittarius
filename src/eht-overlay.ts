@@ -30,10 +30,10 @@ export class EHTOverlay {
 
   private setSource(source: string): void {
     if (source === "m87") {
-      this.img.src = "/images/eht-m87.png";
+      this.img.src = "/images/eht-m87.jpg";
       this.img.alt = "EHT M87* Observation";
     } else if (source === "sgra") {
-      this.img.src = "/images/eht-sgra.png";
+      this.img.src = "/images/eht-sgra.jpg";
       this.img.alt = "EHT Sgr A* Observation";
     }
   }
