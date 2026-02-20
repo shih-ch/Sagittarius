@@ -20,7 +20,18 @@ uniform int   u_maxSteps;
 uniform float u_stepSize;
 uniform int   u_showDisk;
 uniform int   u_showGrid;
+uniform int   u_showDoppler;
 uniform sampler2D u_starfield;
+uniform int   u_colorMode;
+uniform int   u_showEinsteinRing;
+uniform vec3  u_einsteinRingDir;
+uniform int   u_showJets;
+uniform int   u_showTimeDilation;
+uniform int   u_showErgosphere;
+uniform int   u_showTidalForce;
+uniform int   u_showGravWaves;
+uniform int   u_showTempMap;
+uniform int   u_showPolarization;
 
 // --- I/O ---
 in vec2 v_uv;

@@ -21,7 +21,7 @@ export class Camera implements ICamera {
   private phi: number = DEFAULT_CAMERA_PHI;
   private distance: number = DEFAULT_CAMERA_DISTANCE;
   private readonly target: vec3 = vec3.fromValues(0, 0, 0);
-  private readonly fov: number = DEFAULT_FOV;
+  private fov: number = DEFAULT_FOV;
 
   // Reusable matrices to avoid per-frame allocation
   private readonly viewMat: mat4 = mat4.create();
@@ -138,6 +138,7 @@ export class Camera implements ICamera {
     this.theta = DEFAULT_CAMERA_THETA;
     this.phi = DEFAULT_CAMERA_PHI;
     this.distance = DEFAULT_CAMERA_DISTANCE;
+    this.fov = DEFAULT_FOV;
     this.animating = false;
   }
 
@@ -177,6 +178,8 @@ export class Camera implements ICamera {
   getTheta(): number { return this.theta; }
   getPhi(): number { return this.phi; }
   getDistance(): number { return this.distance; }
+  getFov(): number { return this.fov; }
+  setFov(fov: number): void { this.fov = Math.max(5, Math.min(120, fov)); }
 
   dispose(): void {
     window.removeEventListener("mousemove", this.onMouseMove);

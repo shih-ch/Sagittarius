@@ -46,3 +46,9 @@ export const MAX_CAMERA_DISTANCE = 200.0;
 
 // Shadow radius (analytical): r_shadow = 3√3 × M ≈ 5.196 × M
 export const shadowRadius = (mass: number) => 3 * Math.sqrt(3) * mass;
+
+// Kerr ergosphere outer boundary: r_ergo(θ) = M + √(M² - a²cos²θ)
+export const kerrErgosphere = (mass: number, spin: number, cosTheta: number): number => {
+  const a = spin * mass;
+  return mass + Math.sqrt(Math.max(mass * mass - a * a * cosTheta * cosTheta, 0));
+};

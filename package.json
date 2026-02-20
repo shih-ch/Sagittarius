@@ -10,7 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "gl-matrix": "^3.4.4"
+    "gl-matrix": "^3.4.4",
+    "katex": "^0.16.28"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

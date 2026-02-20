@@ -15,6 +15,16 @@ const UNIFORM_NAMES: (keyof UniformLocations)[] = [
   "u_showGrid",
   "u_showDoppler",
   "u_starfield",
+  "u_colorMode",
+  "u_showEinsteinRing",
+  "u_einsteinRingDir",
+  "u_showJets",
+  "u_showTimeDilation",
+  "u_showErgosphere",
+  "u_showTidalForce",
+  "u_showGravWaves",
+  "u_showTempMap",
+  "u_showPolarization",
 ];
 
 /** Look up and cache all uniform locations for the given program. */
@@ -55,4 +65,22 @@ export function setUniforms(
   gl.uniform1i(loc.u_showGrid, state.params.showGrid ? 1 : 0);
   gl.uniform1i(loc.u_showDoppler, state.params.showDoppler ? 1 : 0);
   gl.uniform1i(loc.u_starfield, 0); // texture unit 0
+  gl.uniform1i(loc.u_colorMode, state.params.colorMode);
+  gl.uniform1i(loc.u_showEinsteinRing, state.params.showEinsteinRing ? 1 : 0);
+  // Convert lon/lat to unit direction vector
+  const lon = state.params.einsteinRingLon;
+  const lat = state.params.einsteinRingLat;
+  gl.uniform3f(
+    loc.u_einsteinRingDir,
+    Math.cos(lat) * Math.cos(lon),
+    Math.sin(lat),
+    Math.cos(lat) * Math.sin(lon)
+  );
+  gl.uniform1i(loc.u_showJets, state.params.showJets ? 1 : 0);
+  gl.uniform1i(loc.u_showTimeDilation, state.params.showTimeDilation ? 1 : 0);
+  gl.uniform1i(loc.u_showErgosphere, state.params.showErgosphere ? 1 : 0);
+  gl.uniform1i(loc.u_showTidalForce, state.params.showTidalForce ? 1 : 0);
+  gl.uniform1i(loc.u_showGravWaves, state.params.showGravWaves ? 1 : 0);
+  gl.uniform1i(loc.u_showTempMap, state.params.showTempMap ? 1 : 0);
+  gl.uniform1i(loc.u_showPolarization, state.params.showPolarization ? 1 : 0);
 }

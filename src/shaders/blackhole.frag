@@ -24,6 +24,16 @@ uniform int   u_showDisk;
 uniform int   u_showGrid;
 uniform int   u_showDoppler;
 uniform sampler2D u_starfield;
+uniform int   u_colorMode;
+uniform int   u_showEinsteinRing;
+uniform vec3  u_einsteinRingDir;
+uniform int   u_showJets;
+uniform int   u_showTimeDilation;
+uniform int   u_showErgosphere;
+uniform int   u_showTidalForce;
+uniform int   u_showGravWaves;
+uniform int   u_showTempMap;
+uniform int   u_showPolarization;
 
 // --- I/O ---
 in vec2 v_uv;
@@ -34,8 +44,8 @@ const float PI = 3.14159265358979;
 const float TWO_PI = 6.28318530717959;
 const float DISK_INNER_RATIO = 3.0;   // inner edge = 3 * rs = ISCO
 const float DISK_OUTER_RATIO = 12.0;  // outer edge = 12 * rs
-const float ESCAPE_MULT = 3.0;        // escape at 3x camera distance
-const float MIN_ESCAPE = 80.0;
+const float ESCAPE_MULT = 1.5;        // escape at 1.5x camera distance
+const float MIN_ESCAPE = 35.0;
 const int   MAX_LOOP = 10000;         // compile-time loop guard
 
 // ============================================================
@@ -135,6 +145,34 @@ float fbm(vec2 p, int octaves) {
 }
 
 // ============================================================
+// Viridis-like colormap for temperature visualization
+// ============================================================
+
+vec3 viridisColormap(float t) {
+    // Approximation of viridis: deep purple → teal → yellow
+    t = clamp(t, 0.0, 1.0);
+    if (t < 0.25) {
+        return mix(vec3(0.267, 0.004, 0.329), vec3(0.282, 0.140, 0.457), t / 0.25);
+    } else if (t < 0.5) {
+        return mix(vec3(0.282, 0.140, 0.457), vec3(0.127, 0.566, 0.550), (t - 0.25) / 0.25);
+    } else if (t < 0.75) {
+        return mix(vec3(0.127, 0.566, 0.550), vec3(0.529, 0.800, 0.247), (t - 0.5) / 0.25);
+    } else {
+        return mix(vec3(0.529, 0.800, 0.247), vec3(0.993, 0.906, 0.144), (t - 0.75) / 0.25);
+    }
+}
+
+// ============================================================
+// HSV to RGB conversion for polarization map
+// ============================================================
+
+vec3 hsv2rgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+// ============================================================
 // Accretion disk color + opacity (semi-transparent, turbulent)
 // Returns vec4: rgb = emitted color, a = opacity
 // ============================================================
@@ -192,11 +230,34 @@ vec4 accretionDiskSample(float r, float rs, vec3 hitPos, vec3 rayDir, float plan
     // --- Temperature gradient ---
     // Novikov-Thorne-ish: temperature ~ r^(-3/4) with ISCO correction
     float tempFactor = pow(max(rInner / r, 0.01), 0.75);
-    // Inner orbits are MUCH hotter
-    vec3 innerColor = vec3(1.0, 1.0, 1.4);   // blue-white (very hot)
-    vec3 hotColor   = vec3(1.0, 0.85, 0.5);  // white-yellow
-    vec3 warmColor  = vec3(1.0, 0.55, 0.12); // orange
-    vec3 outerColor = vec3(0.6, 0.12, 0.02); // deep red (cool)
+
+    // Color palette selection
+    vec3 innerColor, hotColor, warmColor, outerColor;
+    if (u_colorMode == 1) {
+        // Scientific (temperature map): hot=blue → cold=red
+        innerColor = vec3(0.2, 0.3, 1.4);   // deep blue (hot)
+        hotColor   = vec3(0.2, 0.9, 1.0);   // cyan
+        warmColor  = vec3(1.0, 1.0, 0.3);   // yellow
+        outerColor = vec3(0.8, 0.15, 0.05); // red (cold)
+    } else if (u_colorMode == 2) {
+        // Cinematic (Interstellar): warm white → golden → deep orange
+        innerColor = vec3(1.3, 1.2, 1.0);   // bright warm white
+        hotColor   = vec3(1.2, 0.9, 0.4);   // golden
+        warmColor  = vec3(1.0, 0.5, 0.1);   // deep orange
+        outerColor = vec3(0.4, 0.15, 0.02); // dark amber
+    } else if (u_colorMode == 3) {
+        // X-ray (Chandra): white-blue → dark blue → near-black
+        innerColor = vec3(0.9, 0.95, 1.4);  // bright white-blue
+        hotColor   = vec3(0.4, 0.5, 1.2);   // medium blue
+        warmColor  = vec3(0.15, 0.2, 0.7);  // dark blue
+        outerColor = vec3(0.03, 0.04, 0.15);// near-black
+    } else {
+        // Default (thermal): blue-white → yellow → orange → deep red
+        innerColor = vec3(1.0, 1.0, 1.4);   // blue-white (very hot)
+        hotColor   = vec3(1.0, 0.85, 0.5);  // white-yellow
+        warmColor  = vec3(1.0, 0.55, 0.12); // orange
+        outerColor = vec3(0.6, 0.12, 0.02); // deep red (cool)
+    }
 
     vec3 baseColor;
     if (t < 0.15) {
@@ -325,6 +386,82 @@ vec4 geodesicDerivs(vec4 state, float rs, float a) {
 }
 
 // ============================================================
+// Relativistic jet sampling
+// ============================================================
+
+vec4 sampleJet(vec3 pos, float rs, float a) {
+    // Height along spin axis (y) and cylindrical radius
+    float height = abs(pos.y);
+    float cylR = length(vec2(pos.x, pos.z));
+    float r = length(pos);
+
+    if (height < rs * 1.3 || r > rs * 50.0) return vec4(0.0);
+
+    // --- Parabolic collimation profile (Blandford-Znajek) ---
+    // Jet width: w(z) = w0 * (z/z0)^0.5  (parabolic, not conical)
+    // Narrower at base, gradually widening
+    float z0 = rs * 2.0;
+    float w0 = rs * 0.08; // very narrow at base
+    float jetWidth = w0 * sqrt(max(height / z0, 0.1));
+    // Spin narrows the jet
+    float spinNarrow = 1.0 - 0.4 * abs(a) / max(u_mass, 0.001);
+    jetWidth *= spinNarrow;
+
+    // Distance from jet axis normalized by jet width
+    float normDist = cylR / max(jetWidth, 0.001);
+    if (normDist > 3.0) return vec4(0.0);
+
+    // --- Radial profile: Gaussian core + limb brightening ---
+    // Synchrotron emission: limb-brightened (viewing through cylindrical shell)
+    float core = exp(-0.5 * normDist * normDist);
+    float limb = exp(-0.5 * (normDist - 1.0) * (normDist - 1.0) / 0.09) * 0.5;
+    float radialProfile = core + limb;
+
+    // --- Axial brightness: bright base, fading with distance ---
+    // Power-law decay: I ∝ z^(-1.5)
+    float zNorm = height / z0;
+    float axialBright = 1.0 / pow(max(zNorm, 0.3), 1.5);
+
+    // --- Spin dependence: jet power ∝ a² (Blandford-Znajek) ---
+    float spinFactor = (a * a) / max(u_mass * u_mass, 0.001);
+
+    // --- Helical magnetic field structure ---
+    // Twist angle increases with distance (field winding)
+    float twistRate = 6.0 / max(spinNarrow, 0.3);
+    float helixAngle = atan(pos.z, pos.x);
+    float helix = sin(helixAngle * 2.0 - height / rs * twistRate + u_time * 1.5);
+    helix = 0.7 + 0.3 * helix;
+
+    // --- Shock knots (discrete bright spots from internal shocks) ---
+    // Irregularly spaced along the jet
+    float knotPhase = height / rs - u_time * 0.8;
+    float knot1 = exp(-8.0 * pow(fract(knotPhase * 0.3) - 0.5, 2.0));
+    float knot2 = exp(-6.0 * pow(fract(knotPhase * 0.17 + 0.4) - 0.5, 2.0));
+    float knots = 1.0 + (knot1 + knot2 * 0.6) * 1.5 * core; // knots only in core
+
+    // --- Relativistic flow animation ---
+    float flow = sin(height / rs * 4.0 - u_time * 3.0) * 0.15 + 0.85;
+
+    // --- Combine ---
+    float intensity = radialProfile * axialBright * spinFactor * 3.0
+                    * helix * knots * flow;
+
+    // --- Color: synchrotron spectrum ---
+    // Near base: blue-white (higher energy); far: softer blue
+    float tempFactor = 1.0 / pow(max(zNorm, 0.5), 0.3);
+    vec3 jetColor = mix(
+        vec3(0.35, 0.55, 1.2),   // distant: soft blue
+        vec3(0.7, 0.85, 1.5),    // near base: bright blue-white
+        clamp(tempFactor * 0.5, 0.0, 1.0)
+    ) * intensity;
+
+    // Opacity: semi-transparent, denser near core
+    float opacity = clamp(intensity * 0.4, 0.0, 0.85);
+
+    return vec4(jetColor, opacity);
+}
+
+// ============================================================
 // Main
 // ============================================================
 
@@ -390,6 +527,11 @@ void main() {
     vec3 accumColor = vec3(0.0);
     float accumAlpha = 0.0;
     bool terminated = false;
+    float minR = r; // Track closest approach for time dilation map
+    bool enteredErgosphere = false; // Track if ray passed through ergosphere
+    float diskCrossR = 0.0;      // Radius at first disk crossing (for temp map)
+    float diskCrossAngle = 0.0;  // Azimuthal angle at first disk crossing (for polarization)
+    bool hadDiskCross = false;   // Whether we had any disk crossing
 
     // Phase 2: photon ring tracking
     float totalAngle = 0.0;
@@ -430,6 +572,45 @@ void main() {
         vec3 newPos = r * (cos(phi) * e1 + sin(phi) * e2);
         float newY  = newPos.y;
 
+        // Track minimum radius for time dilation
+        minR = min(minR, r);
+
+        // --- Ergosphere detection and tinting ---
+        if (u_showErgosphere == 1 && a != 0.0 && accumAlpha < 0.98) {
+            // Compute cos(theta) from 3D position for ergosphere boundary
+            float cosThSpin = newPos.y / max(r, 0.001);
+            float r_ergo = u_mass + sqrt(max(u_mass * u_mass - a * a * cosThSpin * cosThSpin, 0.0));
+            if (r > r_eh && r < r_ergo) {
+                enteredErgosphere = true;
+                // Accumulate blue-purple tint inside ergosphere
+                float ergoDepth = 1.0 - (r - r_eh) / max(r_ergo - r_eh, 0.001);
+                ergoDepth = clamp(ergoDepth, 0.0, 1.0);
+                float ergoAlpha = 0.008 * ergoDepth;
+                vec3 ergoColor = vec3(0.3, 0.15, 0.9) * (1.0 + ergoDepth * 0.5);
+                accumColor += ergoColor * ergoAlpha * (1.0 - accumAlpha);
+                accumAlpha += ergoAlpha * (1.0 - accumAlpha);
+
+                // Bright boundary line at r ≈ r_ergo
+                float boundaryDist = abs(r - r_ergo) / (rs * 0.1);
+                if (boundaryDist < 1.0) {
+                    float boundaryBright = (1.0 - boundaryDist) * 0.15;
+                    accumColor += vec3(0.4, 0.2, 1.0) * boundaryBright * (1.0 - accumAlpha);
+                    accumAlpha += boundaryBright * 0.3 * (1.0 - accumAlpha);
+                }
+            }
+        }
+
+        // --- Accumulate jet emission (only outside shadow radius) ---
+        // Shadow radius ≈ 2.6*rs; jets inside this look like they're "in" the BH
+        if (u_showJets == 1 && accumAlpha < 0.98 && r > 2.6 * rs) {
+            vec4 jetSample = sampleJet(newPos, rs, a);
+            if (jetSample.a > 0.001) {
+                float ca = jetSample.a * (1.0 - accumAlpha);
+                accumColor += jetSample.rgb * ca;
+                accumAlpha += ca;
+            }
+        }
+
         // --- Check event horizon (Kerr) ---
         if (r <= r_eh && rs > 0.0) {
             terminated = true;
@@ -445,6 +626,13 @@ void main() {
                 vec3 crossPos = mix(prevPos, newPos, tCross);
                 float crossR = length(crossPos);
                 float crossY = mix(prevY, newY, tCross);
+
+                // Track first disk crossing for overlays
+                if (!hadDiskCross) {
+                    hadDiskCross = true;
+                    diskCrossR = crossR;
+                    diskCrossAngle = atan(crossPos.z, crossPos.x);
+                }
 
                 // Sample disk with soft edges
                 if (crossR >= rInner - 0.5 * rs && crossR <= rOuter + rs) {
@@ -468,6 +656,20 @@ void main() {
             vec3 phihat = -sin(phi) * e1 + cos(phi) * e2;
             vec3 escapeDir = normalize(vr * rhat + r * vphi * phihat);
 
+            // Gravitational wave ripple perturbation of starfield
+            if (u_showGravWaves == 1 && a != 0.0) {
+                float gwAmplitude = 0.02 * (a * a) / max(u_mass * u_mass, 0.001);
+                float gwFreq = 2.0 + abs(u_spin) * 4.0;
+                float gwTheta = acos(clamp(escapeDir.y, -1.0, 1.0));
+                float gwPhi = atan(escapeDir.z, escapeDir.x);
+                // Quadrupolar pattern: h+ mode
+                float gwPattern = sin(2.0 * gwTheta - gwFreq * u_time) * sin(gwPhi * 2.0);
+                // Perturb escape direction by small angular offset
+                vec3 perpA = normalize(cross(escapeDir, vec3(0.0, 1.0, 0.001)));
+                vec3 perpB = normalize(cross(escapeDir, perpA));
+                escapeDir = normalize(escapeDir + gwAmplitude * gwPattern * (perpA + 0.5 * perpB));
+            }
+
             float redshift = sqrt(max(1.0 - rs / r, 0.0));
             vec3 starColor = sampleStarfield(escapeDir) * redshift;
 
@@ -475,6 +677,36 @@ void main() {
             if (totalAngle > TWO_PI) {
                 float ringGlow = smoothstep(TWO_PI, TWO_PI * 2.0, totalAngle) * 0.4;
                 starColor += vec3(1.0, 0.8, 0.5) * ringGlow;
+            }
+
+            // Einstein Ring: background galaxy lensed into arcs/ring
+            // Due to time-reversal symmetry of geodesics, the escape direction
+            // of a camera ray = the direction from which light would arrive.
+            // If escapeDir points at the source galaxy, this pixel sees the galaxy.
+            if (u_showEinsteinRing == 1) {
+                float angDist = acos(clamp(dot(escapeDir, u_einsteinRingDir), -1.0, 1.0));
+
+                // Compact background galaxy (~2° angular radius)
+                float galaxyRadius = 0.035;
+
+                // Sharp brightness: bright core + compact disk, hard cutoff
+                float core = exp(-0.5 * pow(angDist / (galaxyRadius * 0.3), 2.0));
+                float gdisk = exp(-0.5 * pow(angDist / galaxyRadius, 2.0));
+                float srcBright = core * 1.2 + gdisk * 0.8;
+
+                // Hard edge: no light beyond 2.5x galaxy radius
+                srcBright *= smoothstep(galaxyRadius * 2.5, galaxyRadius * 1.5, angDist);
+
+                // Galaxy color: golden core → blue outer
+                float tColor = smoothstep(0.0, galaxyRadius, angDist);
+                vec3 galaxyCore = vec3(1.0, 0.8, 0.35);
+                vec3 galaxyOuter = vec3(0.45, 0.65, 1.3);
+                vec3 galaxyColor = mix(galaxyCore, galaxyOuter, tColor);
+
+                // Gravitational magnification near photon sphere
+                float magBoost = 1.0 + smoothstep(0.0, TWO_PI, totalAngle) * 3.0;
+
+                starColor += galaxyColor * srcBright * magBoost * 8.0 * redshift;
             }
 
             accumColor += starColor * (1.0 - accumAlpha);
@@ -490,6 +722,63 @@ void main() {
 
     // ----- 5. Tone mapping: Reinhard -----
     color = color / (1.0 + color);
+
+    // ----- 5b. Time dilation overlay -----
+    if (u_showTimeDilation == 1) {
+        float dilation = sqrt(max(1.0 - rs / max(minR, rs + 0.01), 0.0));
+        // green(1.0) → yellow(0.5) → red(0.1) → black(0.0)
+        vec3 dilColor = dilation > 0.5
+            ? mix(vec3(1.0, 1.0, 0.0), vec3(0.0, 1.0, 0.0), (dilation - 0.5) * 2.0)
+            : dilation > 0.1
+                ? mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), (dilation - 0.1) / 0.4)
+                : mix(vec3(0.0), vec3(1.0, 0.0, 0.0), dilation / 0.1);
+        color = mix(color, dilColor, 0.4);
+    }
+
+    // ----- 5c. Tidal force map overlay -----
+    if (u_showTidalForce == 1 && minR < escapeR) {
+        // Tidal acceleration F = 2M/r³
+        float tidal = 2.0 * u_mass / (minR * minR * minR);
+        // Normalize on log scale for visibility
+        float tidalNorm = clamp(log(1.0 + tidal * 50.0) / log(1.0 + 50.0), 0.0, 1.0);
+        // Green (mild) → yellow (moderate) → red (spaghettification)
+        vec3 tidalColor;
+        if (tidalNorm < 0.5) {
+            tidalColor = mix(vec3(0.0, 0.6, 0.1), vec3(1.0, 1.0, 0.0), tidalNorm * 2.0);
+        } else {
+            tidalColor = mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), (tidalNorm - 0.5) * 2.0);
+        }
+        color = mix(color, tidalColor, 0.4 * tidalNorm);
+    }
+
+    // ----- 5d. Novikov-Thorne temperature map overlay -----
+    if (u_showTempMap == 1 && hadDiskCross && diskCrossR > 0.0) {
+        float rRatio = max(rInner / diskCrossR, 0.001);
+        // T(r) = r^(-3/4) × (1 - √(r_isco/r))^(1/4), normalized
+        float tempProfile = pow(rRatio, 0.75) * pow(max(1.0 - sqrt(rRatio), 0.0), 0.25);
+        // Normalize: peak occurs at ~1.36 × rInner, where tempProfile ≈ 0.488
+        float tempNorm = clamp(tempProfile / 0.488, 0.0, 1.0);
+        vec3 tempColor = viridisColormap(tempNorm);
+        color = mix(color, tempColor, 0.6);
+    }
+
+    // ----- 5e. Polarization map overlay -----
+    if (u_showPolarization == 1 && hadDiskCross) {
+        // Polarization angle from toroidal B-field: perpendicular to projected field
+        float polAngle = diskCrossAngle + PI * 0.5;
+        // Encode as cyclic HSV color
+        float hue = fract(polAngle / PI);
+        vec3 polColor = hsv2rgb(vec3(hue, 0.8, 0.9));
+        // Grid mask for tick-mark-like appearance
+        float gridMask = abs(sin(diskCrossAngle * 8.0)) * abs(sin(diskCrossR / rs * 4.0));
+        gridMask = smoothstep(0.3, 0.7, gridMask);
+        color = mix(color, polColor, 0.35 * gridMask);
+    }
+
+    // ----- 5f. Ergosphere overlay (subtle tint for rays that entered) -----
+    if (u_showErgosphere == 1 && enteredErgosphere) {
+        color = mix(color, vec3(0.25, 0.15, 0.7), 0.1);
+    }
 
     // ----- 6. Gamma correction -----
     color = pow(color, vec3(1.0 / 2.2));

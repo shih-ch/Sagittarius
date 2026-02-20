@@ -8,6 +8,18 @@ export interface BlackHoleParams {
   showDisk: boolean;      // Accretion disk toggle
   showGrid: boolean;      // Spacetime grid mode toggle
   showDoppler: boolean;   // Doppler beaming toggle
+  colorMode: number;      // Disk color palette (0=thermal, 1=scientific, 2=cinematic, 3=xray)
+  showEinsteinRing: boolean;  // Point light source behind BH
+  einsteinRingLon: number;    // Source longitude (radians)
+  einsteinRingLat: number;    // Source latitude (radians)
+  showJets: boolean;      // Relativistic jets toggle
+  showTimeDilation: boolean;  // Time dilation overlay
+  bloomIntensity: number; // Bloom post-processing (0=off, 0–1)
+  showErgosphere: boolean;    // Kerr ergosphere boundary
+  showTidalForce: boolean;    // Tidal force color map
+  showGravWaves: boolean;     // Gravitational wave ripples
+  showTempMap: boolean;       // Novikov-Thorne temperature map
+  showPolarization: boolean;  // Polarization direction overlay
 }
 
 export interface RenderState {
@@ -31,6 +43,16 @@ export interface UniformLocations {
   u_showGrid: WebGLUniformLocation | null;
   u_showDoppler: WebGLUniformLocation | null;
   u_starfield: WebGLUniformLocation | null;
+  u_colorMode: WebGLUniformLocation | null;
+  u_showEinsteinRing: WebGLUniformLocation | null;
+  u_einsteinRingDir: WebGLUniformLocation | null;
+  u_showJets: WebGLUniformLocation | null;
+  u_showTimeDilation: WebGLUniformLocation | null;
+  u_showErgosphere: WebGLUniformLocation | null;
+  u_showTidalForce: WebGLUniformLocation | null;
+  u_showGravWaves: WebGLUniformLocation | null;
+  u_showTempMap: WebGLUniformLocation | null;
+  u_showPolarization: WebGLUniformLocation | null;
 }
 
 export interface ICamera {
@@ -45,6 +67,8 @@ export interface ICamera {
   getTheta(): number;
   getPhi(): number;
   getDistance(): number;
+  getFov(): number;
+  setFov(fov: number): void;
 }
 
 export interface TrajectoryPoint {
@@ -61,6 +85,26 @@ export interface TraceResult {
   diskCrossings: number;
   e1: [number, number, number];
   e2: [number, number, number];
+}
+
+export interface ParticleTraceResult {
+  trajectory: TrajectoryPoint[];
+  outcome: 'circular' | 'plunging' | 'elliptical' | 'max_steps';
+  orbitCount: number;
+  closestApproach: number;
+  farthestExtent: number;
+  initialRadius: number;
+  initialVphi: number;
+}
+
+export interface PenroseResult {
+  inbound: TrajectoryPoint[];
+  fragmentA: TrajectoryPoint[];   // retrograde plunging fragment (negative energy)
+  fragmentB: TrajectoryPoint[];   // prograde escaping fragment (boosted energy)
+  energyIn: number;               // inbound particle energy at infinity
+  energyA: number;                // fragment A energy (negative)
+  energyB: number;                // fragment B energy (> energyIn)
+  splitRadius: number;            // where the split occurs (inside ergosphere)
 }
 
 export interface PixelClickEvent {
