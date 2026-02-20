@@ -79,6 +79,7 @@ window.addEventListener("toggle-trajectory-mode", () => {
     lastTraceResult = null;
     camera.setPixelClickHandler(null);
   }
+  window.dispatchEvent(new CustomEvent("trajectory-mode-changed", { detail: { active: trajectoryMode } }));
 });
 
 // Formula Panel (Phase 7)
@@ -111,7 +112,10 @@ if (btnTour) {
 }
 
 // Event-driven tour/formula panel toggles
-window.addEventListener("toggle-formula-panel", () => formulaPanel.toggle());
+window.addEventListener("toggle-formula-panel", () => {
+  formulaPanel.toggle();
+  window.dispatchEvent(new CustomEvent("formula-panel-changed", { detail: { active: !document.getElementById("formula-panel")?.classList.contains("hidden") } }));
+});
 window.addEventListener("start-guided-tour", () => guidedTour.start());
 
 // Newton comparison toggle

@@ -422,6 +422,40 @@
       font-size: 11px;
       color: #888;
     }
+
+    /* Touch Toolbar */
+    #touch-toolbar {
+      position: fixed;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 20;
+    }
+    #touch-toolbar button {
+      display: block;
+      width: auto;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #aaa;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      font-size: 11px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      line-height: 1.2;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    #touch-toolbar button:hover { background: rgba(60, 60, 60, 0.8); color: #ddd; }
+    #touch-toolbar button:active { background: rgba(80, 80, 80, 0.9); }
+    #touch-toolbar button.active {
+      color: #f90;
+      border-color: rgba(255, 153, 0, 0.5);
+      background: rgba(255, 153, 0, 0.12);
+    }
   </style>
 </head>
 <body class="lang-zh">
@@ -1020,6 +1054,14 @@
       <button id="tour-auto"><span class="tip-zh" style="display:inline;">自動</span><span class="tip-en" style="display:inline;">Auto</span></button>
       <button id="tour-close">&times;</button>
     </div>
+  </div>
+
+  <div id="touch-toolbar">
+    <button id="tb-panel"><span class="tip-zh">面板</span><span class="tip-en">Panel</span></button>
+    <button id="tb-info"><span class="tip-zh">資訊</span><span class="tip-en">Info</span></button>
+    <button id="tb-science"><span class="tip-zh">教學</span><span class="tip-en">Science</span></button>
+    <button id="tb-trace"><span class="tip-zh">追蹤</span><span class="tip-en">Trace</span></button>
+    <button id="tb-formulas"><span class="tip-zh">公式</span><span class="tip-en">Formula</span></button>
   </div>
 
   <script type="module" src="/src/main.ts"></script>

@@ -323,6 +323,62 @@ export function initControls(
     }
   });
 
+  // ── Touch toolbar buttons ──────────────────────────────────────────
+  const tbPanel = document.getElementById("tb-panel");
+  const tbInfo = document.getElementById("tb-info");
+  const tbScience = document.getElementById("tb-science");
+  const tbTrace = document.getElementById("tb-trace");
+  const tbFormulas = document.getElementById("tb-formulas");
+
+  if (tbPanel) {
+    tbPanel.addEventListener("click", () => {
+      document.getElementById("control-panel")?.classList.toggle("hidden");
+      tbPanel.classList.toggle("active", !document.getElementById("control-panel")?.classList.contains("hidden"));
+    });
+    // Panel is visible by default
+    tbPanel.classList.add("active");
+  }
+  if (tbInfo) {
+    tbInfo.addEventListener("click", () => {
+      document.getElementById("info-overlay")?.classList.toggle("hidden");
+      tbInfo.classList.toggle("active", !document.getElementById("info-overlay")?.classList.contains("hidden"));
+    });
+  }
+  if (tbScience) {
+    tbScience.addEventListener("click", () => {
+      document.getElementById("science-panel")?.classList.toggle("hidden");
+      tbScience.classList.toggle("active", !document.getElementById("science-panel")?.classList.contains("hidden"));
+    });
+  }
+  if (tbTrace) {
+    tbTrace.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("toggle-trajectory-mode"));
+    });
+    // Listen for trajectory mode changes to sync active state
+    window.addEventListener("trajectory-mode-changed", ((e: CustomEvent) => {
+      tbTrace.classList.toggle("active", e.detail?.active === true);
+    }) as EventListener);
+  }
+  if (tbFormulas) {
+    tbFormulas.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("toggle-formula-panel"));
+    });
+    // Listen for formula panel changes to sync active state
+    window.addEventListener("formula-panel-changed", ((e: CustomEvent) => {
+      tbFormulas.classList.toggle("active", e.detail?.active === true);
+    }) as EventListener);
+  }
+
+  // Sync toolbar active states when keyboard shortcuts toggle panels
+  window.addEventListener("keydown", () => {
+    // Defer to next frame so the toggle has already happened
+    requestAnimationFrame(() => {
+      if (tbPanel) tbPanel.classList.toggle("active", !document.getElementById("control-panel")?.classList.contains("hidden"));
+      if (tbInfo) tbInfo.classList.toggle("active", !document.getElementById("info-overlay")?.classList.contains("hidden"));
+      if (tbScience) tbScience.classList.toggle("active", !document.getElementById("science-panel")?.classList.contains("hidden"));
+    });
+  });
+
   // Initialize display values
   massValue.textContent = massSlider.value;
   spinValue.textContent = spinSlider.value;
