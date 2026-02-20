@@ -369,19 +369,25 @@ export function getParams(): BlackHoleParams {
 
 /** Programmatically set UI controls from partial params (used by guided tour) */
 export function setParamsUI(partial: Partial<BlackHoleParams>): void {
-  const setSlider = (id: string, val: number) => {
+  const setSlider = (id: string, val: number, displayId?: string) => {
     const el = document.getElementById(id) as HTMLInputElement | null;
-    if (el) el.value = String(val);
+    if (el) {
+      el.value = String(val);
+      if (displayId) {
+        const disp = document.getElementById(displayId);
+        if (disp) disp.textContent = String(val);
+      }
+    }
   };
   const setCheck = (id: string, val: boolean) => {
     const el = document.getElementById(id) as HTMLInputElement | null;
     if (el) el.checked = val;
   };
 
-  if (partial.mass !== undefined) setSlider("mass-slider", partial.mass);
-  if (partial.spin !== undefined) setSlider("spin-slider", partial.spin);
-  if (partial.maxSteps !== undefined) setSlider("steps-slider", partial.maxSteps);
-  if (partial.stepSize !== undefined) setSlider("stepsize-slider", partial.stepSize);
+  if (partial.mass !== undefined) setSlider("mass-slider", partial.mass, "mass-value");
+  if (partial.spin !== undefined) setSlider("spin-slider", partial.spin, "spin-value");
+  if (partial.maxSteps !== undefined) setSlider("steps-slider", partial.maxSteps, "steps-value");
+  if (partial.stepSize !== undefined) setSlider("stepsize-slider", partial.stepSize, "stepsize-value");
   if (partial.showDisk !== undefined) setCheck("toggle-disk", partial.showDisk);
   if (partial.showGrid !== undefined) setCheck("toggle-grid", partial.showGrid);
   if (partial.showDoppler !== undefined) setCheck("toggle-doppler", partial.showDoppler);
@@ -393,7 +399,7 @@ export function setParamsUI(partial: Partial<BlackHoleParams>): void {
   if (partial.showGravWaves !== undefined) setCheck("toggle-grav-waves", partial.showGravWaves);
   if (partial.showTempMap !== undefined) setCheck("toggle-temp-map", partial.showTempMap);
   if (partial.showPolarization !== undefined) setCheck("toggle-polarization", partial.showPolarization);
-  if (partial.bloomIntensity !== undefined) setSlider("bloom-slider", partial.bloomIntensity);
+  if (partial.bloomIntensity !== undefined) setSlider("bloom-slider", partial.bloomIntensity, "bloom-value");
   if (partial.colorMode !== undefined) {
     const el = document.getElementById("colormode-select") as HTMLSelectElement | null;
     if (el) el.value = String(partial.colorMode);
@@ -589,7 +595,8 @@ function startRecording(btn: HTMLElement): void {
 
   mediaRecorder.start();
   isRecording = true;
-  btn.textContent = "Stop Rec";
+  const isZh = document.body.classList.contains("lang-zh");
+  btn.textContent = isZh ? "停止" : "Stop Rec";
   btn.classList.add("recording");
 }
 
@@ -598,7 +605,8 @@ function stopRecording(btn: HTMLElement): void {
     mediaRecorder.stop();
   }
   isRecording = false;
-  btn.textContent = "Record";
+  const isZh = document.body.classList.contains("lang-zh");
+  btn.textContent = isZh ? "錄影" : "Record";
   btn.classList.remove("recording");
 }
 

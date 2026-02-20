@@ -14,87 +14,96 @@ interface TourStep {
   holdDuration: number; // seconds to hold before auto-advance
 }
 
+// Base params that reset everything to a clean state — each step overrides from this
+const BASE_PARAMS: Partial<BlackHoleParams> = {
+  mass: 1.5, spin: 0,
+  showDisk: true, showGrid: false, showDoppler: false, showJets: false,
+  showTimeDilation: false, showErgosphere: false,
+  showTidalForce: false, showGravWaves: false, showTempMap: false, showPolarization: false,
+  bloomIntensity: 0, colorMode: 0,
+};
+
 const TOUR_STEPS: TourStep[] = [
   {
     titleZh: "歡迎來到黑洞模擬",
     titleEn: "Welcome to Black Hole Simulation",
-    descZh: "這是一個基於廣義相對論的實時黑洞模擬。我們將帶您探索黑洞的各種物理現象。",
-    descEn: "This is a real-time black hole simulation based on General Relativity. Let's explore the physics of black holes together.",
+    descZh: "這是一個基於廣義相對論的實時黑洞模擬。您將看到黑洞如何彎曲光線、扭曲時空。中央黑色區域是黑洞陰影，周圍明亮的環是被彎曲的吸積盤光。",
+    descEn: "This is a real-time black hole simulation based on General Relativity. You'll see how a black hole bends light and warps spacetime. The dark center is the black hole shadow, and the bright ring is light from the accretion disk bent around it.",
     camera: { theta: Math.PI / 3, phi: 0, distance: 30 },
-    params: { mass: 1.5, spin: 0, showDisk: true, showDoppler: true, showJets: false, showTimeDilation: false, showErgosphere: false },
-    holdDuration: 6,
+    params: { ...BASE_PARAMS, showDoppler: true },
+    holdDuration: 7,
   },
   {
     titleZh: "事件視界",
     titleEn: "Event Horizon",
-    descZh: "黑色的區域就是事件視界——連光都無法逃脫的邊界。對於不旋轉的黑洞，其半徑為 rs = 2M。",
-    descEn: "The dark region is the event horizon — the boundary from which not even light can escape. For a non-spinning BH, its radius is rs = 2M.",
-    camera: { theta: Math.PI / 2, phi: 0, distance: 12 },
-    params: { mass: 1.5, spin: 0, showDisk: false, showGrid: true },
+    descZh: "中央完全漆黑的區域就是事件視界——連光都無法逃脫的邊界。史瓦西半徑 rs = 2M = 3.0。注意盤面在黑洞後方的光也被彎曲到上方形成「帽子」。",
+    descEn: "The pitch-black center is the event horizon — the boundary from which not even light can escape. Schwarzschild radius rs = 2M = 3.0. Notice how the disk behind the BH is lensed upward, forming a 'hat' shape.",
+    camera: { theta: Math.PI / 2.5, phi: 0, distance: 22 },
+    params: { ...BASE_PARAMS, showDoppler: true },
     holdDuration: 7,
   },
   {
-    titleZh: "光子球",
-    titleEn: "Photon Sphere",
-    descZh: "在 r = 3M 處，光子可以在不穩定的圓形軌道上運行。這是黑洞陰影的邊界。靠近光子球的光線會繞行多圈，形成明亮的光子環。",
-    descEn: "At r = 3M, photons can orbit in unstable circular paths. This defines the shadow boundary. Photons passing near the photon sphere loop multiple times, creating bright photon rings.",
-    camera: { theta: Math.PI / 4, phi: 0.5, distance: 15 },
-    params: { showDisk: false, showGrid: true },
+    titleZh: "引力透鏡效應",
+    titleEn: "Gravitational Lensing",
+    descZh: "黑洞彎曲了時空，背景的網格線被劇烈扭曲。越靠近黑洞，彎曲越強烈。在光子球 (r=3M) 附近，光甚至會繞黑洞轉圈，產生明亮的光子環。",
+    descEn: "The BH warps spacetime — grid lines are dramatically distorted near it. Closer to the BH, the bending is stronger. Near the photon sphere (r=3M), light orbits the BH, creating bright photon rings.",
+    camera: { theta: Math.PI / 3, phi: 0.5, distance: 28 },
+    params: { ...BASE_PARAMS, showDisk: false, showGrid: true, maxSteps: 3000 },
     holdDuration: 8,
   },
   {
     titleZh: "吸積盤",
     titleEn: "Accretion Disk",
-    descZh: "物質螺旋落入黑洞時形成熾熱的吸積盤。內邊緣在 ISCO (6M) 處，溫度可達數百萬度。差動旋轉產生可見的螺旋結構。",
-    descEn: "Matter spiraling into the BH forms a superheated accretion disk. The inner edge is at the ISCO (6M), with temperatures reaching millions of degrees. Differential rotation creates visible spiral structure.",
-    camera: { theta: 0.3, phi: 0, distance: 25 },
-    params: { showDisk: true, showGrid: false, showDoppler: false, colorMode: 1 },
+    descZh: "物質螺旋落入黑洞形成熾熱的吸積盤。內邊緣在 ISCO (6M) 處，溫度超過百萬度。從上方俯視可以清楚看到盤的環形結構和徑向溫度梯度。",
+    descEn: "Matter spiraling inward forms a superheated accretion disk. Its inner edge is at the ISCO (6M), with temperatures exceeding millions of degrees. The top-down view clearly shows the ring structure and radial temperature gradient.",
+    camera: { theta: 0.4, phi: 0, distance: 30 },
+    params: { ...BASE_PARAMS, colorMode: 1 },
     holdDuration: 8,
-  },
-  {
-    titleZh: "引力透鏡效應",
-    titleEn: "Gravitational Lensing",
-    descZh: "黑洞彎曲了周圍的時空，使背景星光產生扭曲。網格模式清楚地展示了這種效果——注意靠近黑洞的線條如何被劇烈彎曲。",
-    descEn: "The BH warps spacetime, distorting background starlight. Grid mode clearly shows this effect — notice how lines near the BH are dramatically bent.",
-    camera: { theta: Math.PI / 3, phi: 1.0, distance: 25 },
-    params: { showDisk: false, showGrid: true },
-    holdDuration: 7,
   },
   {
     titleZh: "都卜勒效應",
-    titleEn: "Doppler Effect",
-    descZh: "吸積盤以接近光速的速度旋轉。向我們運動的一側因都卜勒聚束而明亮偏藍，遠離的一側暗淡偏紅。這就是 I = D⁴·I₀ 效應。",
-    descEn: "The disk orbits at near-light speed. The approaching side appears bright and blue from Doppler beaming, while the receding side is dim and red. This is the I = D⁴·I₀ effect.",
-    camera: { theta: Math.PI / 2.5, phi: 0, distance: 20 },
-    params: { showDisk: true, showGrid: false, showDoppler: true, colorMode: 0 },
+    titleEn: "Doppler Beaming",
+    descZh: "吸積盤以接近光速旋轉。向我們運動的一側因都卜勒聚束而明亮偏藍（左側），遠離的一側暗淡偏紅（右側）。觀測亮度比可達 I = D⁴·I₀。",
+    descEn: "The disk orbits at near-light speed. The approaching side (left) is bright and blue-shifted from Doppler beaming, while the receding side (right) is dim and red-shifted. Brightness ratio: I = D⁴·I₀.",
+    camera: { theta: Math.PI / 2.5, phi: 0, distance: 28 },
+    params: { ...BASE_PARAMS, showDoppler: true },
     holdDuration: 8,
   },
   {
-    titleZh: "參考系拖曳",
-    titleEn: "Frame Dragging",
-    descZh: "旋轉的克爾黑洞會拖曳周圍的時空。增加自旋參數後，觀察能層（藍紫色區域）的出現——在這裡，靜止是不可能的。",
-    descEn: "A spinning Kerr BH drags spacetime around it. With spin increased, observe the ergosphere (blue-purple region) — here, remaining stationary is impossible.",
-    camera: { theta: Math.PI / 3, phi: 0.3, distance: 18 },
-    params: { spin: 0.9, showDisk: true, showErgosphere: true, showJets: false },
+    titleZh: "克爾黑洞與能層",
+    titleEn: "Kerr Black Hole & Ergosphere",
+    descZh: "增加自旋到 a=0.9M。旋轉的黑洞拖曳周圍時空，形成「能層」（藍紫色區域）。在能層內，沒有任何物體可以保持靜止。注意盤的內邊緣（ISCO）也因自旋而縮小。",
+    descEn: "Spin increased to a=0.9M. The rotating BH drags spacetime, forming the 'ergosphere' (blue-purple). Inside it, nothing can remain stationary. Notice the disk inner edge (ISCO) also shrinks with spin.",
+    camera: { theta: Math.PI / 3, phi: 0, distance: 25 },
+    params: { ...BASE_PARAMS, spin: 0.9, showDoppler: true, showErgosphere: true },
     holdDuration: 8,
   },
   {
     titleZh: "相對論性噴流",
     titleEn: "Relativistic Jets",
-    descZh: "高自旋黑洞通過 Blandford-Znajek 機制產生強大的噴流。功率 ∝ a²，噴流沿自旋軸拋物線聚束，帶有螺旋磁場結構和內部激波節點。",
-    descEn: "High-spin BHs power jets via the Blandford-Znajek mechanism. Power ∝ a², jets are parabolically collimated along the spin axis with helical magnetic field structure and internal shock knots.",
-    camera: { theta: Math.PI / 4, phi: 0, distance: 35 },
-    params: { spin: 0.95, showJets: true, showErgosphere: false, bloomIntensity: 0.3 },
+    descZh: "高自旋黑洞通過 Blandford-Znajek 機制沿旋轉軸噴出強大的相對論性噴流。功率正比於 a²。觀察沿上下方向的明亮噴流結構與內部的螺旋磁場。",
+    descEn: "High-spin BHs launch powerful relativistic jets along the spin axis via the Blandford-Znajek mechanism. Power scales as a². Observe the bright jet structure above and below with helical magnetic field patterns.",
+    camera: { theta: Math.PI / 4, phi: 0, distance: 40 },
+    params: { ...BASE_PARAMS, spin: 0.95, showDoppler: true, showJets: true, bloomIntensity: 0.3 },
     holdDuration: 8,
   },
   {
     titleZh: "引力時間膨脹",
-    titleEn: "Time Dilation",
-    descZh: "靠近黑洞的時鐘走得更慢：dτ/dt = √(1 - rs/r)。色圖顯示：綠色=正常時間流速，黃色=變慢，紅色=幾乎凍結，黑色=完全停止。",
-    descEn: "Clocks near the BH run slower: dτ/dt = √(1 - rs/r). Color map shows: green=normal, yellow=slowed, red=nearly frozen, black=stopped.",
-    camera: { theta: Math.PI / 3, phi: 0, distance: 22 },
-    params: { spin: 0, showTimeDilation: true, showJets: false, bloomIntensity: 0, showDisk: true },
-    holdDuration: 7,
+    titleEn: "Gravitational Time Dilation",
+    descZh: "靠近黑洞的時鐘走得更慢：dτ/dt = √(1 - rs/r)。色圖：綠色=正常時間流速，黃色=變慢，紅色=幾乎凍結。在事件視界處，時間完全停止。",
+    descEn: "Clocks slow down near the BH: dτ/dt = √(1 - rs/r). Color map: green=normal flow, yellow=slowed, red=nearly frozen. At the event horizon, time stops completely.",
+    camera: { theta: Math.PI / 3, phi: 0, distance: 25 },
+    params: { ...BASE_PARAMS, showDoppler: true, showTimeDilation: true },
+    holdDuration: 8,
+  },
+  {
+    titleZh: "感謝觀賞！",
+    titleEn: "Thank You!",
+    descZh: "導覽結束。您可以自由探索：拖動旋轉相機、滾輪縮放、調整右側面板的參數。按 T 追蹤光線軌跡，按 E 查看詳細物理教學。",
+    descEn: "Tour complete! Feel free to explore: drag to rotate camera, scroll to zoom, adjust parameters in the right panel. Press T to trace light rays, press E for detailed physics education.",
+    camera: { theta: Math.PI / 3, phi: 0, distance: 30 },
+    params: { ...BASE_PARAMS, showDoppler: true },
+    holdDuration: 6,
   },
 ];
 
@@ -133,7 +142,7 @@ export class GuidedTour {
     this.originalParams = getParams();
     this.currentStep = 0;
     this.running = true;
-    this.overlay.style.display = "";
+    this.overlay.style.display = "block";
     this.goToStep(0);
   }
 
@@ -167,7 +176,10 @@ export class GuidedTour {
   private toggleAuto(): void {
     this.autoAdvance = !this.autoAdvance;
     const btn = document.getElementById("tour-auto");
-    if (btn) btn.textContent = this.autoAdvance ? "Pause" : "Auto";
+    if (btn) {
+      const isZh = document.body.classList.contains("lang-zh");
+      btn.textContent = this.autoAdvance ? (isZh ? "暫停" : "Pause") : (isZh ? "自動" : "Auto");
+    }
     if (this.autoAdvance) {
       this.scheduleAutoAdvance();
     } else {

@@ -80,15 +80,10 @@
     #control-panel details { margin-bottom: 5px; }
     #control-panel details summary { cursor: pointer; color: #aaa; font-size: 11px; margin-bottom: 3px; }
 
-    /* Bilingual tip system */
+    /* Bilingual tip system — body always has lang-zh or lang-en */
     .tip { font-size: 9px; color: #555; margin: 1px 0 3px 0; line-height: 1.3; }
     body.lang-zh .tip-en { display: none !important; }
     body.lang-en .tip-zh { display: none !important; }
-    body.lang-zh .tip-zh { display: block; }
-    body.lang-en .tip-en { display: block; }
-    /* Default: show Chinese (fallback before JS sets body class) */
-    .tip-zh { display: block; }
-    .tip-en { display: none !important; }
     #panel-lang-toggle {
       float: right;
       background: none;
@@ -471,11 +466,11 @@
       <div class="tip"><span class="tip-zh">模擬有質量粒子（如恆星、氣體團塊）繞黑洞的軌道。與無質量的光不同，有質量物體可以形成穩定的圓形或橢圓軌道。黃色線=粒子軌道</span><span class="tip-en">Simulate massive particle orbits (stars, gas clumps) around the BH. Unlike massless light, massive objects can form stable circular or elliptical orbits. Yellow line = particle orbit</span></div>
       <div style="margin-top:4px;">
         <select id="particle-preset" style="width:100%;background:#222;color:#ddd;border:1px solid #555;border-radius:4px;padding:2px;font-size:11px;margin-bottom:4px;">
-          <option value="stable">Circular (10M)</option>
-          <option value="isco">Circular @ ISCO</option>
-          <option value="elliptical">Elliptical (10M)</option>
-          <option value="plunging">Plunging (4M)</option>
-          <option value="custom">Custom</option>
+          <option value="stable">圓形 Circular (10M)</option>
+          <option value="isco">圓形@ISCO Circular @ ISCO</option>
+          <option value="elliptical">橢圓 Elliptical (10M)</option>
+          <option value="plunging">墜落 Plunging (4M)</option>
+          <option value="custom">自訂 Custom</option>
         </select>
         <div class="control-group" style="margin-bottom:4px;">
           <label style="font-size:11px;"><span class="tip-zh" style="display:inline;">半徑</span><span class="tip-en" style="display:inline;">Radius</span> <span class="val" id="particle-radius-value">10</span></label>
@@ -511,32 +506,32 @@
     <div id="fps-display">FPS: --</div>
 
     <div class="control-group">
-      <label>Mass <span class="val" id="mass-value">1.50</span></label>
+      <label><span class="tip-zh" style="display:inline;">質量</span><span class="tip-en" style="display:inline;">Mass</span> <span class="val" id="mass-value">1.50</span></label>
       <input type="range" id="mass-slider" min="0" max="10" step="0.1" value="1.5" />
       <div class="tip"><span class="tip-zh">黑洞質量。越大→陰影和吸積盤越大</span><span class="tip-en">Black hole mass. Larger = bigger shadow &amp; disk</span></div>
     </div>
 
     <div class="control-group">
-      <label>Spin (a/M) <span class="val" id="spin-value">0.00</span></label>
+      <label><span class="tip-zh" style="display:inline;">自旋 (a/M)</span><span class="tip-en" style="display:inline;">Spin (a/M)</span> <span class="val" id="spin-value">0.00</span></label>
       <input type="range" id="spin-slider" min="0" max="0.99" step="0.01" value="0" />
       <div class="tip"><span class="tip-zh">克爾自旋。0=不旋轉，0.99=極端旋轉</span><span class="tip-en">Kerr spin. 0=non-rotating, 0.99=extremal</span></div>
     </div>
 
     <div class="toggle-row">
-      <label><input type="checkbox" id="toggle-disk" checked /> Disk</label>
-      <label><input type="checkbox" id="toggle-grid" /> Grid</label>
-      <label><input type="checkbox" id="toggle-doppler" checked /> Doppler</label>
-      <label><input type="checkbox" id="toggle-jets" /> Jets</label>
+      <label><input type="checkbox" id="toggle-disk" checked /> <span class="tip-zh" style="display:inline;">盤</span><span class="tip-en" style="display:inline;">Disk</span></label>
+      <label><input type="checkbox" id="toggle-grid" /> <span class="tip-zh" style="display:inline;">網格</span><span class="tip-en" style="display:inline;">Grid</span></label>
+      <label><input type="checkbox" id="toggle-doppler" checked /> <span class="tip-zh" style="display:inline;">都卜勒</span><span class="tip-en" style="display:inline;">Doppler</span></label>
+      <label><input type="checkbox" id="toggle-jets" /> <span class="tip-zh" style="display:inline;">噴流</span><span class="tip-en" style="display:inline;">Jets</span></label>
     </div>
 
     <div class="control-group">
-      <label>View Preset</label>
+      <label><span class="tip-zh" style="display:inline;">視角預設</span><span class="tip-en" style="display:inline;">View Preset</span></label>
       <select id="preset-select">
-        <option value="">-- Select --</option>
-        <option value="top">Top (face-on)</option>
-        <option value="side">Side (edge-on)</option>
-        <option value="classic">Classic (60&deg;)</option>
-        <option value="closeup">Close-up</option>
+        <option value="">-- 選擇 Select --</option>
+        <option value="top">俯視 Top (face-on)</option>
+        <option value="side">側視 Side (edge-on)</option>
+        <option value="classic">經典 Classic (60&deg;)</option>
+        <option value="closeup">近距 Close-up</option>
       </select>
     </div>
 
@@ -545,26 +540,26 @@
         <span class="tip-zh" style="display:inline;">渲染設定</span><span class="tip-en" style="display:inline;">Render Settings</span>
       </summary>
       <div class="control-group">
-        <label>Steps <span class="val" id="steps-value">1000</span></label>
+        <label><span class="tip-zh" style="display:inline;">步數</span><span class="tip-en" style="display:inline;">Steps</span> <span class="val" id="steps-value">1000</span></label>
         <input type="range" id="steps-slider" min="1" max="5000" step="1" value="1000" />
         <div class="tip"><span class="tip-zh">RK4 迭代次數。越多越精確但更慢</span><span class="tip-en">RK4 iterations. More = accurate but slower</span></div>
       </div>
       <div class="control-group">
-        <label>Step Size <span class="val" id="stepsize-value">0.05</span></label>
+        <label><span class="tip-zh" style="display:inline;">步長</span><span class="tip-en" style="display:inline;">Step Size</span> <span class="val" id="stepsize-value">0.05</span></label>
         <input type="range" id="stepsize-slider" min="0.01" max="0.5" step="0.01" value="0.05" />
         <div class="tip"><span class="tip-zh">積分步長。越小越精確</span><span class="tip-en">Integration step. Smaller = more precise</span></div>
       </div>
       <div class="control-group">
-        <label>Resolution</label>
+        <label><span class="tip-zh" style="display:inline;">解析度</span><span class="tip-en" style="display:inline;">Resolution</span></label>
         <select id="resolution-select">
-          <option value="1">1.0x (Full)</option>
+          <option value="1">1.0x (Full/完整)</option>
           <option value="0.5" selected>0.5x</option>
           <option value="0.25">0.25x</option>
         </select>
         <div class="tip"><span class="tip-zh">渲染解析度。降低可提升 FPS</span><span class="tip-en">Render scale. Lower = better FPS</span></div>
       </div>
       <div class="control-group">
-        <label>FOV <span class="val" id="fov-value">60</span>°</label>
+        <label><span class="tip-zh" style="display:inline;">視場角</span><span class="tip-en" style="display:inline;">FOV</span> <span class="val" id="fov-value">60</span>°</label>
         <input type="range" id="fov-slider" min="5" max="120" step="1" value="60">
         <div class="tip"><span class="tip-zh">視場角。降低=長焦距/望遠鏡效果</span><span class="tip-en">Field of view. Lower = telephoto zoom</span></div>
       </div>
@@ -575,17 +570,17 @@
         <span class="tip-zh" style="display:inline;">視覺效果</span><span class="tip-en" style="display:inline;">Visual Effects</span>
       </summary>
       <div class="control-group">
-        <label>Color Mode</label>
+        <label><span class="tip-zh" style="display:inline;">色彩模式</span><span class="tip-en" style="display:inline;">Color Mode</span></label>
         <select id="colormode-select">
-          <option value="0">Default (Thermal)</option>
-          <option value="1">Scientific (Temp)</option>
-          <option value="2">Cinematic</option>
+          <option value="0">預設 Default (Thermal)</option>
+          <option value="1">科學 Scientific (Temp)</option>
+          <option value="2">電影 Cinematic</option>
           <option value="3">X-ray</option>
         </select>
         <div class="tip"><span class="tip-zh">盤面配色。按 C 鍵切換</span><span class="tip-en">Disk palette. Press C to cycle</span></div>
       </div>
       <div class="control-group">
-        <label>Bloom <span class="val" id="bloom-value">0</span></label>
+        <label><span class="tip-zh" style="display:inline;">輝光</span><span class="tip-en" style="display:inline;">Bloom</span> <span class="val" id="bloom-value">0</span></label>
         <input type="range" id="bloom-slider" min="0" max="1" step="0.05" value="0" />
         <div class="tip"><span class="tip-zh">輝光效果。0=關閉，按 B 切換</span><span class="tip-en">Glow effect. 0=off, press B to toggle</span></div>
       </div>
@@ -684,16 +679,19 @@
       </div>
     </details>
 
-    <button id="btn-reset">Reset Camera</button>
+    <button id="btn-reset"><span class="tip-zh" style="display:inline;">重置相機</span><span class="tip-en" style="display:inline;">Reset Camera</span></button>
 
     <div class="action-buttons">
-      <button id="btn-screenshot" title="Screenshot (S)">Screenshot</button>
-      <button id="btn-record" title="Record video (R)">Record</button>
-      <button id="btn-fullscreen" title="Fullscreen (F)">Fullscreen</button>
-      <button id="btn-tour" title="Guided Tour (O)">Tour</button>
+      <button id="btn-screenshot" title="Screenshot (S)"><span class="tip-zh" style="display:inline;">截圖</span><span class="tip-en" style="display:inline;">Screenshot</span></button>
+      <button id="btn-record" title="Record video (R)"><span class="tip-zh" style="display:inline;">錄影</span><span class="tip-en" style="display:inline;">Record</span></button>
+      <button id="btn-fullscreen" title="Fullscreen (F)"><span class="tip-zh" style="display:inline;">全螢幕</span><span class="tip-en" style="display:inline;">Fullscreen</span></button>
+      <button id="btn-tour" title="Guided Tour (O)"><span class="tip-zh" style="display:inline;">導覽</span><span class="tip-en" style="display:inline;">Tour</span></button>
     </div>
 
-    <div class="hint">H panel · I info · E science · F full · S snap · R rec<br>T trace · D doppler · C color · J jets · B bloom · N newton<br>G ergo · W waves · P formulas · O tour</div>
+    <div class="hint">
+      <span class="tip-zh">H 面板 · I 資訊 · E 教學 · F 全螢幕 · S 截圖 · R 錄影<br>T 追蹤 · D 都卜勒 · C 色彩 · J 噴流 · B 輝光 · N 牛頓<br>G 能層 · W 引力波 · P 公式 · O 導覽</span>
+      <span class="tip-en">H panel · I info · E science · F full · S snap · R rec<br>T trace · D doppler · C color · J jets · B bloom · N newton<br>G ergo · W waves · P formulas · O tour</span>
+    </div>
   </div>
 
   <div id="info-overlay" class="hidden"></div>
@@ -1016,10 +1014,10 @@
     <h3 id="tour-title"></h3>
     <div class="tour-desc" id="tour-desc"></div>
     <div class="tour-controls">
-      <button id="tour-prev">Prev</button>
+      <button id="tour-prev"><span class="tip-zh" style="display:inline;">上一步</span><span class="tip-en" style="display:inline;">Prev</span></button>
       <span class="tour-step-indicator" id="tour-step-indicator">1 / 9</span>
-      <button id="tour-next">Next</button>
-      <button id="tour-auto">Auto</button>
+      <button id="tour-next"><span class="tip-zh" style="display:inline;">下一步</span><span class="tip-en" style="display:inline;">Next</span></button>
+      <button id="tour-auto"><span class="tip-zh" style="display:inline;">自動</span><span class="tip-en" style="display:inline;">Auto</span></button>
       <button id="tour-close">&times;</button>
     </div>
   </div>
