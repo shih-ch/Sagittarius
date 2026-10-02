@@ -83,7 +83,7 @@ Mouse: drag to rotate, scroll to zoom.
 
 ### Prerequisites / 環境需求
 
-- [Node.js](https://nodejs.org/) >= 18
+- [Node.js](https://nodejs.org/) 20.19+ or 22.12+ (required by Vite 7)
 - npm >= 9 (included with Node.js)
 - A modern browser with WebGL2 support (Chrome, Firefox, Edge, Safari 15+)
 
@@ -91,8 +91,8 @@ Mouse: drag to rotate, scroll to zoom.
 
 ```bash
 # Clone the repository / 複製專案
-git clone <repository-url>
-cd sagittarius
+git clone https://github.com/shih-ch/Sagittarius.git
+cd Sagittarius
 
 # Install dependencies / 安裝依賴
 npm install
@@ -101,7 +101,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser.
+Open `http://localhost:5173/Sagittarius/` in your browser (the app is served under the `/Sagittarius/` base path set in `vite.config.ts`).
 
 ### Build / 建置
 
